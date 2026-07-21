@@ -1,10 +1,10 @@
 // services/services.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Service } from './entities/service.entity';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Service } from "./entities/service.entity";
+import { CreateServiceDto } from "./dto/create-service.dto";
+import { UpdateServiceDto } from "./dto/update-service.dto";
 
 @Injectable()
 export class ServicesService {
@@ -13,13 +13,18 @@ export class ServicesService {
     private readonly repo: Repository<Service>,
   ) {}
 
-  create(dto: CreateServiceDto) {
+  create(dto: CreateServiceDto, establishment_id: number) {
     const service = this.repo.create(dto);
-    return this.repo.save(service);
+    return this.repo.save({
+      ...service,
+      establishment_id: establishment_id,
+    });
   }
 
-  findAll() {
-    return this.repo.find();
+  findAll(establishment_id: string) {
+    return this.repo.find({
+      where: { establishment_id: Number(establishment_id) },
+    });
   }
 
   async findOne(id: number) {

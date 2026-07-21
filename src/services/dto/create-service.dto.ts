@@ -6,13 +6,9 @@ import {
   IsNumber,
   IsPositive,
   IsString,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateServiceDto {
-  @IsInt()
-  @IsPositive()
-  establishment_id: number;
-
   @IsString()
   @IsNotEmpty()
   name: string;
