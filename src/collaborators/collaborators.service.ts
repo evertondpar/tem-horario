@@ -1,10 +1,11 @@
 // collaborators/collaborators.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Collaborator } from './entities/collaborator.entity';
-import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
-import { UpdateCollaboratorDto } from './dto/update-collaborator.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Collaborator } from "./entities/collaborator.entity";
+import { CreateCollaboratorDto } from "./dto/create-collaborator.dto";
+import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class CollaboratorsService {
@@ -13,13 +14,25 @@ export class CollaboratorsService {
     private readonly repo: Repository<Collaborator>,
   ) {}
 
-  create(dto: CreateCollaboratorDto) {
-    const collaborator = this.repo.create(dto);
+  async create(dto: CreateCollaboratorDto, establishment_id: number) {
+    const find = await this.repo.findOne({ where: { phone: dto.phone } });
+    if (find?.id) {
+      return {
+        message: "Telefone em uso.",
+        statusCode: 400,
+      };
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const collaborator = this.repo.create({
+      ...dto,
+      establishment_id: establishment_id,
+      password: hashedPassword,
+    });
     return this.repo.save(collaborator);
   }
 
-  findAll() {
-    return this.repo.find();
+  findAll(establishment_id: number) {
+    return this.repo.find({ where: { establishment_id: establishment_id } });
   }
 
   async findOne(id: number) {

@@ -1,34 +1,57 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CollaboratorsService } from './collaborators.service';
-import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
-import { UpdateCollaboratorDto } from './dto/update-collaborator.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from "@nestjs/common";
+import { CollaboratorsService } from "./collaborators.service";
+import { CreateCollaboratorDto } from "./dto/create-collaborator.dto";
+import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { CurrentEstablishment } from "src/auth/decorators/current-establishment.decorator";
 
-@Controller('collaborators')
+@UseGuards(JwtAuthGuard)
+@Controller("collaborators")
 export class CollaboratorsController {
   constructor(private readonly collaboratorsService: CollaboratorsService) {}
 
   @Post()
-  create(@Body() createCollaboratorDto: CreateCollaboratorDto) {
-    return this.collaboratorsService.create(createCollaboratorDto);
+  create(
+    @Body() createCollaboratorDto: CreateCollaboratorDto,
+    @CurrentEstablishment() establishment: { id: number; phone: string },
+  ) {
+    return this.collaboratorsService.create(
+      createCollaboratorDto,
+      establishment.id,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.collaboratorsService.findAll();
+  findAll(
+    @CurrentEstablishment() establishment: { id: number; phone: string },
+  ) {
+    return this.collaboratorsService.findAll(establishment.id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.collaboratorsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCollaboratorDto: UpdateCollaboratorDto) {
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body() updateCollaboratorDto: UpdateCollaboratorDto,
+  ) {
     return this.collaboratorsService.update(+id, updateCollaboratorDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.collaboratorsService.remove(+id);
   }
 }
