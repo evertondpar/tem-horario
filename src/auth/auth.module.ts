@@ -7,10 +7,12 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { Establishment } from "../establishments/entities/establishment.entity";
 import { JwtStrategy } from "./strategies/jwt.strategy";
+import { Collaborator } from "src/collaborators/entities/collaborator.entity";
+import { CollaboratorJwtStrategy } from "./strategies/collaborator-jwt.strategy";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Establishment]),
+    TypeOrmModule.forFeature([Establishment, Collaborator]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,7 +23,7 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [JwtStrategy],
+  providers: [AuthService, JwtStrategy, CollaboratorJwtStrategy],
+  exports: [JwtStrategy, CollaboratorJwtStrategy],
 })
 export class AuthModule {}

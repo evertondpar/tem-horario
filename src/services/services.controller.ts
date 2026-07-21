@@ -12,7 +12,8 @@ import { ServicesService } from "./services.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import * as currentEstablishmentDecorator from "src/auth/decorators/current-establishment.decorator";
+import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
+import type { CurrentEstablishmentPayload } from "src/auth/types";
 
 @Controller("services")
 export class ServicesController {
@@ -22,8 +23,8 @@ export class ServicesController {
   @UseGuards(JwtAuthGuard)
   create(
     @Body() createServiceDto: CreateServiceDto,
-    @currentEstablishmentDecorator.CurrentEstablishment()
-    establishment: currentEstablishmentDecorator.CurrentEstablishmentPayload,
+    @CurrentUser()
+    establishment: CurrentEstablishmentPayload,
   ) {
     return this.servicesService.create(createServiceDto, establishment.id);
   }

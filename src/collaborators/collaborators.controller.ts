@@ -12,7 +12,8 @@ import { CollaboratorsService } from "./collaborators.service";
 import { CreateCollaboratorDto } from "./dto/create-collaborator.dto";
 import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import * as currentEstablishmentDecorator from "src/auth/decorators/current-establishment.decorator";
+import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
+import type { CurrentEstablishmentPayload } from "src/auth/types";
 
 @UseGuards(JwtAuthGuard)
 @Controller("collaborators")
@@ -22,8 +23,7 @@ export class CollaboratorsController {
   @Post()
   create(
     @Body() createCollaboratorDto: CreateCollaboratorDto,
-    @currentEstablishmentDecorator.CurrentEstablishment()
-    establishment: currentEstablishmentDecorator.CurrentEstablishmentPayload,
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
   ) {
     return this.collaboratorsService.create(
       createCollaboratorDto,
@@ -32,10 +32,7 @@ export class CollaboratorsController {
   }
 
   @Get()
-  findAll(
-    @currentEstablishmentDecorator.CurrentEstablishment()
-    establishment: currentEstablishmentDecorator.CurrentEstablishmentPayload,
-  ) {
+  findAll(@CurrentUser() establishment: CurrentEstablishmentPayload) {
     return this.collaboratorsService.findAll(establishment.id);
   }
 

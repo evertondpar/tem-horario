@@ -12,7 +12,7 @@ import { EstablishmentsService } from "./establishments.service";
 import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
 import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { CurrentEstablishment } from "src/auth/decorators/current-establishment.decorator";
+import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 
 @Controller("establishments")
 export class EstablishmentsController {
@@ -32,7 +32,7 @@ export class EstablishmentsController {
   @UseGuards(JwtAuthGuard)
   findOne(
     @Param("id") id: string,
-    @CurrentEstablishment() establishment: { id: number; phone: string },
+    @CurrentUser() establishment: { id: number; phone: string },
   ) {
     console.log("Estabelecimento logado:", establishment.id);
     return this.establishmentsService.findOne(+id);
