@@ -1,10 +1,11 @@
 // Establishments/Establishments.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Establishment } from './entities/establishment.entity';
-import { CreateEstablishmentDto } from './dto/create-establishment.dto';
-import { UpdateEstablishmentDto } from './dto/update-establishment.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Establishment } from "./entities/establishment.entity";
+import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
+import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class EstablishmentsService {
@@ -13,9 +14,13 @@ export class EstablishmentsService {
     private readonly repo: Repository<Establishment>,
   ) {}
 
-  create(dto: CreateEstablishmentDto) {
-    const Establishment = this.repo.create(dto);
-    return this.repo.save(Establishment);
+  async create(dto: CreateEstablishmentDto) {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const establishment = this.repo.create({
+      ...dto,
+      password: hashedPassword,
+    });
+    return this.repo.save(establishment);
   }
 
   findAll() {

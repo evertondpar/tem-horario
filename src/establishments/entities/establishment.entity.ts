@@ -6,11 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import { Service } from '../../services/entities/service.entity';
-import { Collaborator } from '../../collaborators/entities/collaborator.entity';
+} from "typeorm";
+import { Service } from "../../services/entities/service.entity";
+import { Collaborator } from "../../collaborators/entities/collaborator.entity";
 
-@Entity('establishments')
+@Entity("establishments")
 export class Establishment {
   @PrimaryGeneratedColumn()
   id: number;
@@ -35,6 +35,9 @@ export class Establishment {
 
   @OneToMany(() => Collaborator, (collaborator) => collaborator.establishment)
   collaborators: Collaborator[];
+
+  @Column()
+  password: string;
 
   @CreateDateColumn()
   createdAt: Date;
