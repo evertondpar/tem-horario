@@ -1,37 +1,53 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 // schedules/dto/create-schedule.dto.ts
-import { IsInt, IsObject, IsOptional, IsPositive } from 'class-validator';
+import { Type } from "class-transformer";
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from "class-validator";
+import { ScheduleStatus } from "src/helpers/generateSchedule";
+export class CreateDayScheduleDto {
+  @IsString()
+  @IsOptional()
+  day?: string;
 
+  @IsArray()
+  @ArrayMinSize(48)
+  @ArrayMaxSize(48)
+  slots: ScheduleStatus[];
+}
 export class CreateScheduleDto {
-  @IsInt()
-  @IsPositive()
-  collaborator_id: number;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  monday?: CreateDayScheduleDto;
 
   @IsOptional()
-  @IsObject()
-  monday?: Record<string, any>;
-
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  tuesday?: CreateDayScheduleDto;
   @IsOptional()
-  @IsObject()
-  tuesday?: Record<string, any>;
-
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  wednesday?: CreateDayScheduleDto;
   @IsOptional()
-  @IsObject()
-  wednesday?: Record<string, any>;
-
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  thursday?: CreateDayScheduleDto;
   @IsOptional()
-  @IsObject()
-  thursday?: Record<string, any>;
-
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  friday?: CreateDayScheduleDto;
   @IsOptional()
-  @IsObject()
-  friday?: Record<string, any>;
-
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  saturday?: CreateDayScheduleDto;
   @IsOptional()
-  @IsObject()
-  saturday?: Record<string, any>;
-
-  @IsOptional()
-  @IsObject()
-  sunday?: Record<string, any>;
+  @ValidateNested()
+  @Type(() => CreateDayScheduleDto)
+  sunday?: CreateDayScheduleDto;
 }

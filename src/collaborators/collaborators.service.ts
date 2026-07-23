@@ -6,12 +6,20 @@ import { Collaborator } from "./entities/collaborator.entity";
 import { CreateCollaboratorDto } from "./dto/create-collaborator.dto";
 import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
 import * as bcrypt from "bcrypt";
+import { SchedulesService } from "src/schedules/schedules.service";
+import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
+import { Schedule } from "src/schedules/entities/schedule.entity";
 
 @Injectable()
 export class CollaboratorsService {
   constructor(
     @InjectRepository(Collaborator)
     private readonly repo: Repository<Collaborator>,
+    private readonly scheduleService: SchedulesService,
+    @InjectRepository(Schedule)
+    private readonly scheduleRepo: Repository<Schedule>,
+    @InjectRepository(CollaboratorService)
+    private readonly collaboratorServiceRepo: Repository<CollaboratorService>,
   ) {}
 
   async create(dto: CreateCollaboratorDto, establishment_id: number) {
@@ -28,7 +36,12 @@ export class CollaboratorsService {
       establishment_id: establishment_id,
       password: hashedPassword,
     });
-    return this.repo.save(collaborator);
+    const created = await this.repo.save(collaborator);
+    console.log("collaborator ", collaborator);
+    if (created?.id) {
+      await this.scheduleService.create(created?.id);
+    }
+    return created;
   }
 
   findAll(establishment_id: number) {
@@ -50,6 +63,10 @@ export class CollaboratorsService {
 
   async remove(id: number) {
     const collaborator = await this.findOne(id);
+    await this.collaboratorServiceRepo.delete({
+      collaborator_id: id,
+    });
+    await this.scheduleRepo.delete({ collaborator_id: id });
     return this.repo.remove(collaborator);
   }
 }
