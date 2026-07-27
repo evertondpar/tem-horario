@@ -35,6 +35,7 @@ Aceitar.
 Recusar.
 Cancelar.
 Atualizar automaticamente a agenda.
+*PAREI EM ATUALIZAR A SITUAÇÃO DA AGENDA QUANDO OCORRER OS CASOS ACIMA*
 
 Meta: toda a regra principal funcionando.
 

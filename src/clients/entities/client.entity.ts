@@ -6,10 +6,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import { Appointment } from '../../appointments/entities/appointment.entity';
+} from "typeorm";
+import { Appointment } from "../../appointments/entities/appointment.entity";
 
-@Entity('clients')
+@Entity("clients")
 export class Client {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,8 +23,8 @@ export class Client {
   @Column({ nullable: true })
   photo: string;
 
-  @OneToMany(() => Appointment, (appointment) => appointment.client)
-  appointments: Appointment[];
+  // @OneToMany(() => Appointment, (appointment) => appointment.client)
+  // appointments: Appointment[];
 
   @CreateDateColumn()
   createdAt: Date;

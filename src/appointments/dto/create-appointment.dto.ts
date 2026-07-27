@@ -1,16 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 // appointments/dto/create-appointment.dto.ts
-import { IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
-import { AppointmentStatus } from '../entities/appointment.entity';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from "class-validator";
+import { AppointmentStatus } from "../entities/appointment.entity";
 
 export class CreateAppointmentDto {
   @IsInt()
   @IsPositive()
   collaborator_id: number;
 
-  @IsInt()
-  @IsPositive()
-  client_id: number;
+  @IsString()
+  client_name: string;
+  @IsString()
+  client_phone: string;
 
   @IsInt()
   @IsPositive()
@@ -20,11 +27,9 @@ export class CreateAppointmentDto {
   @IsEnum(AppointmentStatus)
   status?: AppointmentStatus;
 
-  @IsInt()
-  @IsPositive()
-  start_at: number;
+  @IsString()
+  appointment_date: string; // 2026-07-25
 
-  @IsInt()
-  @IsPositive()
-  end_at: number;
+  @IsString()
+  start_time: string; // 14:00
 }
