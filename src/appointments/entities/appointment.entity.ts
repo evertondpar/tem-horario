@@ -9,12 +9,12 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
-import { Client } from "../../clients/entities/client.entity";
 import { Service } from "../../services/entities/service.entity";
 
 export enum AppointmentStatus {
   SCHEDULED = "scheduled",
   CONFIRMED = "confirmed",
+  REFUSED = "refused",
   CANCELED = "canceled",
   COMPLETED = "completed",
 }

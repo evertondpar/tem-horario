@@ -32,9 +32,9 @@ export class EstablishmentsController {
   @UseGuards(JwtAuthGuard)
   findOne(
     @Param("id") id: string,
-    @CurrentUser() establishment: { id: number; phone: string },
+    // @CurrentUser() establishment: { id: number; phone: string },
   ) {
-    console.log("Estabelecimento logado:", establishment.id);
+    // console.log("Estabelecimento logado:", establishment.id);
     return this.establishmentsService.findOne(+id);
   }
 

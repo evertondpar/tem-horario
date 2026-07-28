@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // appointments/appointments.service.ts
 import {
   BadRequestException,
@@ -40,6 +42,49 @@ export class AppointmentsService {
     private readonly dataSource: DataSource,
   ) {}
 
+  private getDaySchedule(schedule: Schedule, appointmentDate: string): any {
+    const days: any[] = [
+      schedule.sunday,
+      schedule.monday,
+      schedule.tuesday,
+      schedule.wednesday,
+      schedule.thursday,
+      schedule.friday,
+      schedule.saturday,
+    ];
+
+    const day = days[dayjs(appointmentDate).day()];
+
+    if (!day) {
+      throw new BadRequestException("Dia da agenda inválido.");
+    }
+
+    if (day.day !== appointmentDate) {
+      throw new BadRequestException(
+        "A agenda não corresponde ao dia informado.",
+      );
+    }
+
+    return day;
+  }
+
+  private updateScheduleSlots(
+    schedule: Schedule,
+    appointment: Appointment,
+    service: Service,
+    status: ScheduleStatus,
+  ) {
+    const day = this.getDaySchedule(schedule, appointment.appointment_date);
+
+    const startSlot = TimeSlot[appointment.start_time.replace(":", "")];
+
+    const duration = service.duration_minutes / 30;
+
+    for (let i = 0; i < duration; i++) {
+      day.slots[startSlot + i] = status;
+    }
+  }
+
   validateSchedule(
     schedule: Schedule,
     dto: CreateAppointmentDto,
@@ -59,7 +104,6 @@ export class AppointmentsService {
       schedule.saturday,
     ];
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const day: DaySchedule = days[dayjs(dto.appointment_date).day()];
     if (day.day !== dto.appointment_date) {
       throw new BadRequestException(
@@ -67,7 +111,7 @@ export class AppointmentsService {
       );
     }
     const formattedStartTime = dto.start_time.replace(":", "");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const startSlot: number = TimeSlot[formattedStartTime];
 
     if (startSlot === undefined) {
@@ -87,10 +131,7 @@ export class AppointmentsService {
       );
     }
     for (let i = 0; i < duration; i++) {
-      if (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        day.slots[startSlot + i] !== ScheduleStatus.AVAILABLE
-      ) {
+      if (day.slots[startSlot + i] !== ScheduleStatus.AVAILABLE) {
         throw new BadRequestException("Horário indisponível.");
       }
     }
@@ -217,5 +258,105 @@ export class AppointmentsService {
   async remove(id: number) {
     const appointment = await this.findOne(id);
     return this.appointmentRepo.remove(appointment);
+  }
+  async changeStatus(id: number, status: AppointmentStatus) {
+    return this.dataSource.transaction(async (manager) => {
+      const appointmentRepo = manager.getRepository(Appointment);
+      const scheduleRepo = manager.getRepository(Schedule);
+      const serviceRepo = manager.getRepository(Service);
+
+      /**
+       * 1 - Buscar o agendamento
+       */
+      const appointment = await appointmentRepo.findOne({
+        where: { id },
+      });
+
+      if (!appointment) {
+        throw new NotFoundException("Agendamento não encontrado.");
+      }
+
+      /**
+       * 2 - Não permitir alterar um agendamento finalizado
+       */
+      if (
+        appointment.status === AppointmentStatus.CANCELED ||
+        appointment.status === AppointmentStatus.COMPLETED ||
+        appointment.status === AppointmentStatus.REFUSED
+      ) {
+        throw new BadRequestException(
+          "Este agendamento não pode mais ser alterado.",
+        );
+      }
+
+      /**
+       * 3 - Buscar serviço
+       */
+      const service = await serviceRepo.findOne({
+        where: {
+          id: appointment.service_id,
+        },
+      });
+
+      if (!service) {
+        throw new NotFoundException("Serviço não encontrado.");
+      }
+
+      /**
+       * 4 - Buscar agenda
+       */
+      const schedule = await scheduleRepo.findOne({
+        where: {
+          collaborator_id: appointment.collaborator_id,
+        },
+      });
+
+      if (!schedule) {
+        throw new NotFoundException("Agenda não encontrada.");
+      }
+
+      /**
+       * 5 - Atualizar agenda
+       *
+       * Aceitou  -> ocupa horários
+       * Cancelou -> libera horários
+       * Recusou  -> libera horários
+       * Concluiu -> não altera agenda
+       */
+      switch (status) {
+        case AppointmentStatus.CONFIRMED:
+          this.updateScheduleSlots(
+            schedule,
+            appointment,
+            service,
+            ScheduleStatus.OCCUPIED,
+          );
+          break;
+
+        case AppointmentStatus.CANCELED:
+        case AppointmentStatus.COMPLETED:
+        case AppointmentStatus.REFUSED:
+          this.updateScheduleSlots(
+            schedule,
+            appointment,
+            service,
+            ScheduleStatus.AVAILABLE,
+          );
+          break;
+      }
+
+      /**
+       * 6 - Atualizar status
+       */
+      appointment.status = status;
+
+      /**
+       * 7 - Persistir alterações
+       */
+      await scheduleRepo.save(schedule);
+      await appointmentRepo.save(appointment);
+
+      return appointment;
+    });
   }
 }
