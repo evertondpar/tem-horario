@@ -1,98 +1,223 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Tem Horário? 💈
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Sistema de agendamento online para barbearias desenvolvido com NestJS.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+O objetivo do projeto é permitir que uma barbearia gerencie colaboradores, serviços, agendas e agendamentos através de uma API REST, além de disponibilizar um ambiente público para que clientes possam realizar agendamentos.
 
-## Description
+> Projeto desenvolvido para fins de estudo, portfólio e aplicação prática de conceitos de arquitetura backend.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 🚀 Tecnologias
 
-```bash
-$ yarn install
+- NestJS
+- TypeScript
+- TypeORM
+- MySQL
+- JWT Authentication
+- Class Validator
+- Day.js
+- Bcrypt
+
+---
+
+## 📁 Estrutura
+
+```text
+src/
+├── appointments/
+├── auth/
+├── collaborator-service/
+├── collaborators/
+├── establishments/
+├── schedules/
+├── services/
+└── common/
 ```
 
-## Compile and run the project
+---
+
+## 🔐 Autenticação
+
+O sistema possui autenticação JWT.
+
+Existem dois tipos de acesso:
+
+- Administrador da barbearia
+- Colaborador
+
+Cada tipo possui permissões específicas.
+
+---
+
+## 💈 Funcionalidades
+
+### Administração
+
+- Login
+- Cadastro de colaboradores
+- Cadastro de serviços
+- Vincular serviços aos colaboradores
+- Configuração da agenda dos colaboradores
+- Gerenciamento de agendamentos
+- Confirmação
+- Cancelamento
+- Recusa
+- Conclusão de agendamentos
+
+### Público
+
+- Listar colaboradores
+- Listar serviços
+- Consultar horários disponíveis
+- Criar agendamento
+
+---
+
+## 📅 Funcionamento da agenda
+
+Cada colaborador possui uma agenda própria.
+
+A agenda é composta por 48 slots de 30 minutos.
+
+Exemplo:
+
+08:00 → Disponível
+
+08:30 → Disponível
+
+09:00 → Ocupado
+
+09:30 → Ocupado
+
+...
+
+Os estados possíveis são:
+
+| Status | Valor |
+|--------|------:|
+| AVAILABLE | 0 |
+| OCCUPIED | 1 |
+| UNAVAILABLE | 2 |
+
+---
+
+## ⚙️ Regras de negócio
+
+- Um colaborador só pode realizar serviços que estejam vinculados a ele.
+- Não é possível agendar horários indisponíveis.
+- Todos os horários necessários para a duração do serviço devem estar livres.
+- A agenda é atualizada automaticamente após um agendamento.
+- Alterações que envolvem múltiplas tabelas são realizadas utilizando transações do TypeORM.
+
+---
+
+## 📚 Endpoints
+
+### Auth
+
+POST /auth/login
+
+---
+
+### Collaborators
+
+GET /admin/collaborators
+
+POST /admin/collaborators
+
+PATCH /admin/collaborators/:id
+
+DELETE /admin/collaborators/:id
+
+---
+
+### Services
+
+GET /admin/services
+
+POST /admin/services
+
+PATCH /admin/services/:id
+
+DELETE /admin/services/:id
+
+---
+
+### Appointments
+
+GET /admin/appointments
+
+POST /public/appointments
+
+PATCH /admin/appointments/:id/status
+
+---
+
+## 🗄️ Banco de dados
+
+O projeto utiliza MySQL e TypeORM.
+
+Principais entidades:
+
+- Establishment
+- Collaborator
+- Service
+- CollaboratorService
+- Schedule
+- Appointment
+
+---
+
+## ▶️ Executando
+
+Clone o projeto
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+git clone ...
 ```
 
-## Run tests
+Instale as dependências
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+npm install
 ```
 
-## Deployment
+Configure o arquivo `.env`
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```env
+DB_HOST=
+DB_PORT=
+DB_USER=
+DB_PASSWORD=
+DB_NAME=
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+JWT_SECRET=
+```
+
+Execute
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📌 Próximas melhorias
 
-Check out a few resources that may come in handy when working with NestJS:
+- Cadastro de clientes
+- Notificações
+- Upload de imagens
+- Recuperação de senha
+- Dashboard
+- Testes automatizados
+- Docker
+- Deploy
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 👨‍💻 Autor
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Everton Ribeiro
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Desenvolvido para fins de aprendizado e portfólio.
