@@ -13,6 +13,7 @@ import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
 import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
+import type { CurrentEstablishmentPayload } from "src/auth/types";
 
 @Controller("establishments")
 export class EstablishmentsController {
@@ -23,6 +24,11 @@ export class EstablishmentsController {
     return this.establishmentsService.create(createEstablishmentDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get("dashboard")
+  getDashboardInfos(@CurrentUser() establishment: CurrentEstablishmentPayload) {
+    return this.establishmentsService.getDashboardInfos(establishment.id);
+  }
   @Get()
   findAll() {
     return this.establishmentsService.findAll();

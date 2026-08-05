@@ -91,3 +91,11 @@ Painel
 ✅ Colaboradores
 ✅ Serviços
 ✅ Agenda
+
+
+  // @Column()
+  // client_id: number;
+
+  // @ManyToOne(() => Client, (client) => client.appointments)
+  // @JoinColumn({ name: "client_id" })
+  // client: Client;

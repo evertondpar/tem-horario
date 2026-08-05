@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
 import { Service } from "../../services/entities/service.entity";
+import { Establishment } from "src/establishments/entities/establishment.entity";
 
 export enum AppointmentStatus {
   SCHEDULED = "scheduled",
@@ -26,22 +27,20 @@ export class Appointment {
 
   @Column()
   collaborator_id: number;
+  @Column()
+  establishment_id: number;
 
   @ManyToOne(() => Collaborator, (collaborator) => collaborator.appointments)
   @JoinColumn({ name: "collaborator_id" })
   collaborator: Collaborator;
+  @ManyToOne(() => Establishment, (establishment) => establishment.appointments)
+  @JoinColumn({ name: "establishment_id" })
+  establishment: Establishment;
 
   @Column()
   client_name: string;
   @Column()
   client_phone: string;
-
-  // @Column()
-  // client_id: number;
-
-  // @ManyToOne(() => Client, (client) => client.appointments)
-  // @JoinColumn({ name: "client_id" })
-  // client: Client;
 
   @Column()
   service_id: number;

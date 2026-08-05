@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import { Service } from "../../services/entities/service.entity";
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
+import { Appointment } from "src/appointments/entities/appointment.entity";
 
 @Entity("establishments")
 export class Establishment {
@@ -35,6 +36,8 @@ export class Establishment {
 
   @OneToMany(() => Collaborator, (collaborator) => collaborator.establishment)
   collaborators: Collaborator[];
+  @OneToMany(() => Appointment, (appointment) => appointment.collaborator)
+  appointments: Appointment[];
 
   @Column()
   password: string;
