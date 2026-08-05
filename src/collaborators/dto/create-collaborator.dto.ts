@@ -10,9 +10,9 @@ export class CreateCollaboratorDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
-  @IsString()
-  @IsNotEmpty()
-  password: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // password: string;
 
   @IsOptional()
   @IsString()

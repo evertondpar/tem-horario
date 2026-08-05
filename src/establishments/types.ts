@@ -7,3 +7,8 @@ export interface DashboardResponse {
   collaborators: Partial<Collaborator>[];
   appointments: Partial<Appointment>[];
 }
+export interface ListCollaboratorsResponse {
+  collaborators: (Omit<Collaborator, "password" | "collaboratorServices"> & {
+    services: Partial<Service>[];
+  })[];
+}

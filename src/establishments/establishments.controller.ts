@@ -29,6 +29,11 @@ export class EstablishmentsController {
   getDashboardInfos(@CurrentUser() establishment: CurrentEstablishmentPayload) {
     return this.establishmentsService.getDashboardInfos(establishment.id);
   }
+  @UseGuards(JwtAuthGuard)
+  @Get("collaborators")
+  getCollaborators(@CurrentUser() establishment: CurrentEstablishmentPayload) {
+    return this.establishmentsService.getCollaborators(establishment.id);
+  }
   @Get()
   findAll() {
     return this.establishmentsService.findAll();

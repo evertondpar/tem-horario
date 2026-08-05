@@ -12,7 +12,8 @@ import {
   Appointment,
   AppointmentStatus,
 } from "src/appointments/entities/appointment.entity";
-import { DashboardResponse } from "./types";
+import { DashboardResponse, ListCollaboratorsResponse } from "./types";
+import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 
 @Injectable()
 export class EstablishmentsService {
@@ -23,6 +24,8 @@ export class EstablishmentsService {
     private readonly serviceRepo: Repository<Service>,
     @InjectRepository(Collaborator)
     private readonly collaboratorRepo: Repository<Collaborator>,
+    @InjectRepository(CollaboratorService)
+    private readonly collaboratorServiceRepo: Repository<CollaboratorService>,
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
   ) {}
@@ -80,6 +83,35 @@ export class EstablishmentsService {
       services,
       collaborators,
       appointments: nextAppointments,
+    };
+  }
+  async getCollaborators(id: number): Promise<ListCollaboratorsResponse> {
+    const establishment = await this.repo.exists({
+      where: { id },
+    });
+
+    if (!establishment) {
+      throw new NotFoundException("Estabelecimento não encontrado.");
+    }
+
+    const collaborators = await this.collaboratorRepo.find({
+      where: {
+        establishment_id: id,
+      },
+      relations: {
+        collaboratorServices: {
+          service: true,
+        },
+      },
+    });
+    return {
+      collaborators: collaborators.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ password, collaboratorServices, ...collaborator }) => ({
+          ...collaborator,
+          services: collaboratorServices.map((cs) => cs.service),
+        }),
+      ),
     };
   }
 

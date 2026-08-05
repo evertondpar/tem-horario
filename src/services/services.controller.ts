@@ -16,11 +16,11 @@ import { CurrentUser } from "src/auth/decorators/current-establishment.decorator
 import type { CurrentEstablishmentPayload } from "src/auth/types";
 
 @Controller("services")
+@UseGuards(JwtAuthGuard)
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUser()
@@ -29,9 +29,13 @@ export class ServicesController {
     return this.servicesService.create(createServiceDto, establishment.id);
   }
 
-  @Get(":establishmentId")
-  findAll(@Param("establishmentId") id: string) {
-    return this.servicesService.findAll(id);
+  @Get()
+  findAll(
+    @CurrentUser()
+    establishment: CurrentEstablishmentPayload,
+  ) {
+    console.log("id ", establishment);
+    return this.servicesService.findAll(establishment.id);
   }
 
   @Get(":id")

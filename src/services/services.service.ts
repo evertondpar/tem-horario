@@ -21,9 +21,9 @@ export class ServicesService {
     });
   }
 
-  findAll(establishment_id: string) {
+  findAll(establishment_id: number) {
     return this.repo.find({
-      where: { establishment_id: Number(establishment_id) },
+      where: { establishment_id: establishment_id },
     });
   }
 
