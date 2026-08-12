@@ -35,7 +35,7 @@ export class Collaborator {
 
   @Column()
   phone: string;
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column({ nullable: true })

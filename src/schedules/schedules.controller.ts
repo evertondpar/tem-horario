@@ -12,7 +12,10 @@ import { SchedulesService } from "./schedules.service";
 import { CreateScheduleDto } from "./dto/create-schedule.dto";
 import { UpdateScheduleDto } from "./dto/update-schedule.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import type { CurrentCollaboratorPayload } from "src/auth/types";
+import type {
+  CurrentCollaboratorPayload,
+  CurrentEstablishmentPayload,
+} from "src/auth/types";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 
 @UseGuards(JwtAuthGuard)
@@ -33,6 +36,16 @@ export class SchedulesController {
     return this.schedulesService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get("collaborators")
+  listCollaboratorsAndSchedules(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+  ) {
+    console.log(establishment);
+    return this.schedulesService.listCollaboratorsAndSchedules(
+      establishment.id,
+    );
+  }
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.schedulesService.findOne(+id);

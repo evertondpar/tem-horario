@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { Collaborator } from "./entities/collaborator.entity";
 import { CreateCollaboratorDto } from "./dto/create-collaborator.dto";
 import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
-import * as bcrypt from "bcrypt";
+// import * as bcrypt from "bcrypt";
 import { SchedulesService } from "src/schedules/schedules.service";
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { Schedule } from "src/schedules/entities/schedule.entity";
@@ -30,11 +30,11 @@ export class CollaboratorsService {
         statusCode: 400,
       };
     }
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    // const hashedPassword = await bcrypt.hash(dto.password, 10);
     const collaborator = this.repo.create({
       ...dto,
       establishment_id: establishment_id,
-      password: hashedPassword,
+      password: undefined,
     });
     const created = await this.repo.save(collaborator);
     console.log("collaborator ", collaborator);

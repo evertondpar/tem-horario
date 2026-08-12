@@ -5,20 +5,18 @@ import { CollaboratorsService } from "./collaborators.service";
 import { CollaboratorsController } from "./collaborators.controller";
 import { Collaborator } from "./entities/collaborator.entity";
 import { Schedule } from "src/schedules/entities/schedule.entity";
-import { SchedulesService } from "src/schedules/schedules.service";
+
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { CollaboratorServiceService } from "src/collaborator-service/collaborator-service.service";
+import { SchedulesModule } from "src/schedules/schedules.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Collaborator, Schedule, CollaboratorService]),
+    SchedulesModule,
   ],
   controllers: [CollaboratorsController],
-  providers: [
-    CollaboratorsService,
-    SchedulesService,
-    CollaboratorServiceService,
-  ],
+  providers: [CollaboratorsService, CollaboratorServiceService],
   exports: [CollaboratorsService],
 })
 export class CollaboratorsModule {}

@@ -20,5 +20,6 @@ import { CollaboratorService } from "src/collaborator-service/entities/collabora
   ],
   controllers: [EstablishmentsController],
   providers: [EstablishmentsService],
+  exports: [EstablishmentsService],
 })
 export class EstablishmentsModule {}
