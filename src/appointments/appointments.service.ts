@@ -359,4 +359,29 @@ export class AppointmentsService {
       return appointment;
     });
   }
+  async listCollaboratorsAndAppointments(id: number) {
+    const collaborators = await this.collaboratorRepo.find({
+      where: {
+        establishment_id: id,
+      },
+    });
+    const appointments = await this.appointmentRepo.find({
+      where: {
+        establishment_id: id,
+      },
+      relations: {
+        collaborator: true,
+        service: true,
+      },
+    });
+    return {
+      collaborators: collaborators.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ password, appointments, ...collaborator }) => ({
+          ...collaborator,
+        }),
+      ),
+      appointments,
+    };
+  }
 }

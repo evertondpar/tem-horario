@@ -13,6 +13,8 @@ import { CreateAppointmentDto } from "./dto/create-appointment.dto";
 import { UpdateAppointmentDto } from "./dto/update-appointment.dto";
 import { ChangeAppointmentStatusDto } from "./dto/change-appointment-status.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import type { CurrentEstablishmentPayload } from "src/auth/types";
+import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 
 @UseGuards(JwtAuthGuard)
 @Controller("appointments")
@@ -37,6 +39,17 @@ export class AppointmentsController {
   @Get()
   findAll() {
     return this.appointmentsService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("collaborators")
+  listCollaboratorsAndAppointments(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+  ) {
+    console.log(establishment);
+    return this.appointmentsService.listCollaboratorsAndAppointments(
+      establishment.id,
+    );
   }
 
   @Get(":id")
