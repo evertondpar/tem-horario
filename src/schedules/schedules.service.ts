@@ -9,7 +9,6 @@ import { Repository } from "typeorm";
 import { Schedule } from "./entities/schedule.entity";
 import { UpdateScheduleDto } from "./dto/update-schedule.dto";
 import { generateSchedule, ScheduleStatus } from "src/helpers/generateSchedule";
-import { EstablishmentsService } from "src/establishments/establishments.service";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 
 @Injectable()
@@ -19,7 +18,6 @@ export class SchedulesService {
     private readonly repo: Repository<Schedule>,
     @InjectRepository(Collaborator)
     private readonly collaboratorRepo: Repository<Collaborator>,
-    private readonly establishmentsService: EstablishmentsService,
   ) {}
 
   async create(collaborator_id: number): Promise<Schedule> {

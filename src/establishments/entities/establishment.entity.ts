@@ -21,6 +21,8 @@ export class Establishment {
 
   @Column()
   phone: string;
+  @Column({ default: "" })
+  address: string;
 
   @Column({ nullable: true })
   photo: string;

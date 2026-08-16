@@ -39,6 +39,25 @@ export class EstablishmentsController {
     return this.establishmentsService.findAll();
   }
 
+  @Get("profile")
+  @UseGuards(JwtAuthGuard)
+  getProfile(@CurrentUser() establishment: CurrentEstablishmentPayload) {
+    // console.log("Estabelecimento logado:", establishment.id);
+    return this.establishmentsService.getProfile(establishment.id);
+  }
+
+  @Patch("profile")
+  @UseGuards(JwtAuthGuard)
+  updateProfile(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+    @Body() updateEstablishmentDto: UpdateEstablishmentDto,
+  ) {
+    return this.establishmentsService.updateProfile(
+      establishment.id,
+      updateEstablishmentDto,
+    );
+  }
+
   @Get(":id")
   @UseGuards(JwtAuthGuard)
   findOne(

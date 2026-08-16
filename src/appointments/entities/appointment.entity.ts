@@ -60,6 +60,8 @@ export class Appointment {
   appointment_date: string;
   @Column()
   start_time: string;
+  @Column()
+  end_time: string;
 
   @CreateDateColumn()
   createdAt: Date;

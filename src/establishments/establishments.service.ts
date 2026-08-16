@@ -1,7 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // Establishments/Establishments.service.ts
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import { Establishment } from "./entities/establishment.entity";
 import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
 import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
@@ -14,6 +19,13 @@ import {
 } from "src/appointments/entities/appointment.entity";
 import { DashboardResponse, ListCollaboratorsResponse } from "./types";
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
+import { Schedule } from "src/schedules/entities/schedule.entity";
+import {
+  generateSchedule,
+  ScheduleStatus,
+  TimeSlot,
+  WeekCloseAndOpenHours,
+} from "src/helpers/generateSchedule";
 
 @Injectable()
 export class EstablishmentsService {
@@ -28,6 +40,7 @@ export class EstablishmentsService {
     private readonly collaboratorServiceRepo: Repository<CollaboratorService>,
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateEstablishmentDto) {
@@ -45,6 +58,22 @@ export class EstablishmentsService {
 
   async findOne(id: number) {
     const Establishment = await this.repo.findOne({ where: { id } });
+    if (!Establishment)
+      throw new NotFoundException(`Establishment ${id} not found`);
+    return Establishment;
+  }
+  async getProfile(id: number) {
+    const Establishment = await this.repo.findOne({
+      where: { id },
+      select: {
+        name: true,
+        phone: true,
+        address: true,
+        photo: true,
+        open_hour: true,
+        close_hour: true,
+      },
+    });
     if (!Establishment)
       throw new NotFoundException(`Establishment ${id} not found`);
     return Establishment;
@@ -115,6 +144,128 @@ export class EstablishmentsService {
     };
   }
 
+  async updateProfile(id: number, dto: UpdateEstablishmentDto) {
+    const payload: Partial<UpdateEstablishmentDto> = { ...dto };
+    return this.dataSource.transaction(async (manager) => {
+      const establishmentRepo = manager.getRepository(Establishment);
+      const appointmentRepo = manager.getRepository(Appointment);
+      const collaboratorRepo = manager.getRepository(Collaborator);
+      const scheduleRepo = manager.getRepository(Schedule);
+
+      const establishment = await establishmentRepo.findOne({ where: { id } });
+      if (!establishment) {
+        throw new NotFoundException(`Establishment ${id} not found`);
+      }
+
+      const changesWorkingHours =
+        dto.open_hour !== undefined || dto.close_hour !== undefined;
+
+      if (changesWorkingHours) {
+        const newOpen = dto.open_hour ?? establishment.open_hour;
+        const newClose = dto.close_hour ?? establishment.close_hour;
+        const currentOpenIndex =
+          TimeSlot[establishment.open_hour.replace(":", "")];
+        const currentCloseIndex =
+          TimeSlot[establishment.close_hour.replace(":", "")];
+        const newOpenIndex = TimeSlot[newOpen.replace(":", "")];
+        const newCloseIndex = TimeSlot[newClose.replace(":", "")];
+
+        if (
+          newOpenIndex === undefined ||
+          newCloseIndex === undefined ||
+          newOpenIndex >= newCloseIndex
+        ) {
+          throw new BadRequestException(
+            "O horário de abertura deve ser anterior ao horário de fechamento e usar intervalos de 30 minutos.",
+          );
+        }
+
+        const appointments = await appointmentRepo.find({
+          where: {
+            establishment_id: id,
+            status: In([
+              AppointmentStatus.SCHEDULED,
+              AppointmentStatus.CONFIRMED,
+            ]),
+          },
+        });
+
+        const hasConflict = appointments.some((appointment) => {
+          const startIndex = TimeSlot[appointment.start_time.replace(":", "")];
+          const endIndex = TimeSlot[appointment.end_time.replace(":", "")];
+
+          return startIndex < newOpenIndex || endIndex > newCloseIndex;
+        });
+
+        if (hasConflict) {
+          throw new BadRequestException(
+            "Existem agendamentos fora do novo horário de funcionamento.",
+          );
+        }
+
+        const week: WeekCloseAndOpenHours = Array.from({ length: 6 }, () => ({
+          open: newOpen,
+          close: newClose,
+        }));
+        week.push(null);
+
+        const collaborators = await collaboratorRepo.find({
+          where: { establishment_id: id },
+          relations: { schedule: true },
+        });
+
+        await Promise.all(
+          collaborators.map((collaborator) => {
+            if (!collaborator.schedule) {
+              throw new NotFoundException(
+                `Agenda do colaborador ${collaborator.id} não encontrada.`,
+              );
+            }
+
+            const schedulePayload = generateSchedule(collaborator.id, week);
+            const days = [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday",
+            ] as const;
+
+            for (const day of days) {
+              schedulePayload[day].slots = schedulePayload[day].slots.map(
+                (slot, index) =>
+                  collaborator.schedule[day].slots[index] ===
+                  ScheduleStatus.OCCUPIED
+                    ? ScheduleStatus.OCCUPIED
+                    : index >= currentOpenIndex &&
+                        index < currentCloseIndex &&
+                        collaborator.schedule[day].slots[index] ===
+                          ScheduleStatus.UNAVAILABLE
+                      ? ScheduleStatus.UNAVAILABLE
+                      : slot,
+              );
+            }
+
+            return scheduleRepo.save({
+              id: collaborator.schedule.id,
+              ...schedulePayload,
+            });
+          }),
+        );
+      }
+
+      if (payload.password) {
+        payload.password = await bcrypt.hash(payload.password, 10);
+      }
+
+      Object.assign(establishment, payload);
+      const updated = await establishmentRepo.save(establishment);
+      const { password, ...profile } = updated;
+      return profile;
+    });
+  }
   async update(id: number, dto: UpdateEstablishmentDto) {
     const Establishment = await this.findOne(id);
     Object.assign(Establishment, dto);

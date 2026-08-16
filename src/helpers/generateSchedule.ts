@@ -2,6 +2,11 @@ import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
 dayjs.extend(isoWeek);
 
+export type WeekCloseAndOpenHours = ({
+  open: string;
+  close: string;
+} | null)[];
+
 export const TimeSlot = {
   "0000": 0,
   "0030": 1,
@@ -122,8 +127,11 @@ function generateDay(
   };
 }
 
-export function generateSchedule(collaboratorId: number): CollaboratorSchedule {
-  const week = [
+export function generateSchedule(
+  collaboratorId: number,
+  weekTimes?: WeekCloseAndOpenHours,
+): CollaboratorSchedule {
+  const week = weekTimes || [
     { open: "08:00", close: "18:00" }, // Monday
     { open: "08:00", close: "18:00" }, // Tuesday
     { open: "08:00", close: "18:00" }, // Wednesday
