@@ -12,6 +12,7 @@ import { CollaboratorServiceModule } from "./collaborator-service/collaborator-s
 import { ClientsModule } from "./clients/clients.module";
 import { AppointmentsModule } from "./appointments/appointments.module";
 import { AuthModule } from "./auth/auth.module";
+import { DevelopmentModule } from "./development/development.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthModule } from "./auth/auth.module";
         ClientsModule,
         AppointmentsModule,
         AuthModule,
+        DevelopmentModule,
       ],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -48,6 +50,7 @@ import { AuthModule } from "./auth/auth.module";
     ClientsModule,
     AppointmentsModule,
     AuthModule,
+    DevelopmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
