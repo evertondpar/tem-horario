@@ -11,6 +11,7 @@ import {
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
 import { Service } from "../../services/entities/service.entity";
 import { Establishment } from "../../establishments/entities/establishment.entity";
+import { Client } from "../../clients/entities/client.entity";
 
 export enum AppointmentStatus {
   SCHEDULED = "scheduled",
@@ -29,6 +30,13 @@ export class Appointment {
   collaborator_id: number;
   @Column()
   establishment_id: number;
+
+  @Column({ type: "int", nullable: true })
+  client_id: number | null;
+
+  @ManyToOne(() => Client, (client) => client.appointments, { nullable: true })
+  @JoinColumn({ name: "client_id" })
+  client: Client | null;
 
   @ManyToOne(() => Collaborator, (collaborator) => collaborator.appointments)
   @JoinColumn({ name: "collaborator_id" })

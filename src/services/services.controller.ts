@@ -35,11 +35,13 @@ export class ServicesController {
   }
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles("establishment", "collaborator")
   findAll(
     @CurrentUser()
     user: CurrentUserPayload,
   ) {
-    return this.servicesService.findAll(user.establishment_id);
+    return this.servicesService.findAll(user.establishment_id!);
   }
 
   @Get(":id")

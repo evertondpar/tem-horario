@@ -41,7 +41,7 @@ export class Establishment {
   @OneToMany(() => Appointment, (appointment) => appointment.collaborator)
   appointments: Appointment[];
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @CreateDateColumn()

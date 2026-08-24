@@ -20,11 +20,14 @@ export class Client {
   @Column()
   phone: string;
 
+  @Column({ type: "varchar", nullable: true, select: false })
+  password: string | null;
+
   @Column({ nullable: true })
   photo: string;
 
-  // @OneToMany(() => Appointment, (appointment) => appointment.client)
-  // appointments: Appointment[];
+  @OneToMany(() => Appointment, (appointment) => appointment.client)
+  appointments: Appointment[];
 
   @CreateDateColumn()
   createdAt: Date;

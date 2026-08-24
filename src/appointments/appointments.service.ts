@@ -23,6 +23,7 @@ import {
   TimeSlot,
 } from "src/helpers/generateSchedule";
 import type { CurrentUserPayload } from "src/auth/types";
+import { Client } from "src/clients/entities/client.entity";
 
 @Injectable()
 export class AppointmentsService {
@@ -144,14 +145,25 @@ export class AppointmentsService {
     };
   }
 
-  async create(dto: CreateAppointmentDto) {
+  async create(dto: CreateAppointmentDto, clientId: number) {
     return this.dataSource.transaction(async (manager) => {
+      if (
+        dayjs(`${dto.appointment_date}T${dto.start_time}`).isBefore(dayjs())
+      ) {
+        throw new BadRequestException(
+          "Não é possível agendar um horário passado.",
+        );
+      }
       const collaboratorRepo = manager.getRepository(Collaborator);
       const serviceRepo = manager.getRepository(Service);
       const collaboratorServiceRepo =
         manager.getRepository(CollaboratorService);
       const scheduleRepo = manager.getRepository(Schedule);
       const appointmentRepo = manager.getRepository(Appointment);
+      const clientRepo = manager.getRepository(Client);
+
+      const client = await clientRepo.findOne({ where: { id: clientId } });
+      if (!client) throw new NotFoundException("Cliente não encontrado.");
 
       /**
        * 1 - Buscar colaborador
@@ -173,6 +185,9 @@ export class AppointmentsService {
 
       if (!service) {
         throw new NotFoundException("Serviço não encontrado.");
+      }
+      if (service.establishment_id !== collaborator.establishment_id) {
+        throw new BadRequestException("Serviço fora do estabelecimento.");
       }
       if (service.duration_minutes % 30 !== 0) {
         throw new BadRequestException(
@@ -203,6 +218,7 @@ export class AppointmentsService {
         where: {
           collaborator_id: dto.collaborator_id,
         },
+        lock: { mode: "pessimistic_write" },
       });
 
       if (!schedule) {
@@ -225,8 +241,18 @@ export class AppointmentsService {
       /**
        * 7 - Criar agendamento
        */
+      const endSlot = validation.startSlot + validation.duration;
+      const endHour = Math.floor(endSlot / 2)
+        .toString()
+        .padStart(2, "0");
+      const endMinute = endSlot % 2 === 0 ? "00" : "30";
       const appointment = appointmentRepo.create({
         ...dto,
+        client_id: client.id,
+        client_name: client.name,
+        client_phone: client.phone,
+        establishment_id: collaborator.establishment_id,
+        end_time: `${endHour}:${endMinute}`,
         status: AppointmentStatus.SCHEDULED,
       });
 
@@ -245,7 +271,9 @@ export class AppointmentsService {
       where:
         user.role === "collaborator"
           ? { collaborator_id: user.id }
-          : { establishment_id: user.establishment_id },
+          : user.role === "client"
+            ? { client_id: user.id }
+            : { establishment_id: user.establishment_id },
       relations: { collaborator: true, service: true },
       order: { appointment_date: "ASC", start_time: "ASC" },
     });
@@ -292,9 +320,16 @@ export class AppointmentsService {
       const canChange =
         user.role === "collaborator"
           ? appointment.collaborator_id === user.id
-          : appointment.establishment_id === user.establishment_id;
+          : user.role === "client"
+            ? appointment.client_id === user.id
+            : appointment.establishment_id === user.establishment_id;
       if (!canChange) {
         throw new ForbiddenException("Agendamento fora do seu escopo.");
+      }
+      if (user.role === "client" && status !== AppointmentStatus.CANCELED) {
+        throw new ForbiddenException(
+          "O cliente só pode cancelar o agendamento.",
+        );
       }
 
       /**

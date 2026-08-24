@@ -16,6 +16,7 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import type {
   CurrentEstablishmentPayload,
   CurrentUserPayload,
+  CurrentClientPayload,
 } from "src/auth/types";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 import { Roles } from "src/auth/decorators/roles.decorator";
@@ -27,8 +28,13 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
-  create(@Body() createAppointmentDto: CreateAppointmentDto) {
-    return this.appointmentsService.create(createAppointmentDto);
+  @UseGuards(RolesGuard)
+  @Roles("client")
+  create(
+    @Body() createAppointmentDto: CreateAppointmentDto,
+    @CurrentUser() client: CurrentClientPayload,
+  ) {
+    return this.appointmentsService.create(createAppointmentDto, client.id);
   }
   @Patch("status/:id")
   changeStatus(

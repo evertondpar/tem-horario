@@ -9,10 +9,11 @@ import { Establishment } from "../establishments/entities/establishment.entity";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 import { RolesGuard } from "./guards/roles.guard";
+import { Client } from "src/clients/entities/client.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Establishment, Collaborator]),
+    TypeOrmModule.forFeature([Establishment, Collaborator, Client]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

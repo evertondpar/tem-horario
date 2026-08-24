@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   validate(payload: {
     sub: number;
     phone: string;
-    role?: "establishment" | "collaborator";
+    role?: "establishment" | "collaborator" | "client";
     establishment_id?: number;
   }) {
     // O que der return aqui vira `request.user` nas rotas protegidas
@@ -28,7 +28,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       phone: payload.phone,
       role,
       establishment_id:
-        role === "collaborator" ? payload.establishment_id : payload.sub,
+        role === "collaborator"
+          ? payload.establishment_id
+          : role === "establishment"
+            ? payload.sub
+            : null,
     };
   }
 }

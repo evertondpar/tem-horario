@@ -17,4 +17,10 @@ export class AuthController {
   loginCollaborator(@Body() dto: LoginDto) {
     return this.authService.loginCollaborator(dto);
   }
+
+  @Post("login-client")
+  @HttpCode(HttpStatus.OK)
+  loginClient(@Body() dto: LoginDto) {
+    return this.authService.loginClient(dto);
+  }
 }

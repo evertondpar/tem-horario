@@ -7,6 +7,7 @@ import * as bcrypt from "bcrypt";
 import { Establishment } from "../establishments/entities/establishment.entity";
 import { LoginDto } from "./dto/login.dto";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
+import { Client } from "src/clients/entities/client.entity";
 
 @Injectable()
 export class AuthService {
@@ -16,13 +17,17 @@ export class AuthService {
 
     @InjectRepository(Collaborator)
     private readonly collaboratorRepo: Repository<Collaborator>,
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
     private readonly jwtService: JwtService,
   ) {}
 
   async login(dto: LoginDto) {
-    const establishment = await this.establishmentRepo.findOne({
-      where: { phone: dto.phone },
-    });
+    const establishment = await this.establishmentRepo
+      .createQueryBuilder("establishment")
+      .addSelect("establishment.password")
+      .where("establishment.phone = :phone", { phone: dto.phone })
+      .getOne();
 
     if (!establishment) {
       throw new UnauthorizedException("Credenciais inválidas");
@@ -90,6 +95,36 @@ export class AuthService {
       },
       establishment: { ...establishment, password: "" },
       //devolver serviços
+    };
+  }
+
+  async loginClient(dto: LoginDto) {
+    const client = await this.clientRepo
+      .createQueryBuilder("client")
+      .addSelect("client.password")
+      .where("client.phone = :phone", { phone: dto.phone })
+      .getOne();
+
+    if (!client?.password) {
+      throw new UnauthorizedException("Credenciais inválidas");
+    }
+    const passwordMatches = await bcrypt.compare(dto.password, client.password);
+    if (!passwordMatches) {
+      throw new UnauthorizedException("Credenciais inválidas");
+    }
+
+    return {
+      access_token: this.jwtService.sign({
+        sub: client.id,
+        phone: client.phone,
+        role: "client",
+      }),
+      client: {
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        photo: client.photo,
+      },
     };
   }
 }

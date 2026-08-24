@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // appointments/dto/create-appointment.dto.ts
 import {
   IsEnum,
@@ -13,11 +12,6 @@ export class CreateAppointmentDto {
   @IsInt()
   @IsPositive()
   collaborator_id: number;
-
-  @IsString()
-  client_name: string;
-  @IsString()
-  client_phone: string;
 
   @IsInt()
   @IsPositive()

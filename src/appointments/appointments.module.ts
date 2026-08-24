@@ -9,6 +9,7 @@ import { Service } from "src/services/entities/service.entity";
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 import { AuthModule } from "src/auth/auth.module";
+import { Client } from "src/clients/entities/client.entity";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from "src/auth/auth.module";
       Service,
       CollaboratorService,
       Collaborator,
+      Client,
     ]),
     AuthModule,
   ],

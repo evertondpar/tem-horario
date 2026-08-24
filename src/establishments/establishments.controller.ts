@@ -14,6 +14,8 @@ import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 import type { CurrentEstablishmentPayload } from "src/auth/types";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 
 @Controller("establishments")
 export class EstablishmentsController {
@@ -24,12 +26,14 @@ export class EstablishmentsController {
     return this.establishmentsService.create(createEstablishmentDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
   @Get("dashboard")
   getDashboardInfos(@CurrentUser() establishment: CurrentEstablishmentPayload) {
     return this.establishmentsService.getDashboardInfos(establishment.id);
   }
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
   @Get("collaborators")
   getCollaborators(@CurrentUser() establishment: CurrentEstablishmentPayload) {
     return this.establishmentsService.getCollaborators(establishment.id);
@@ -40,14 +44,16 @@ export class EstablishmentsController {
   }
 
   @Get("profile")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
   getProfile(@CurrentUser() establishment: CurrentEstablishmentPayload) {
     // console.log("Estabelecimento logado:", establishment.id);
     return this.establishmentsService.getProfile(establishment.id);
   }
 
   @Patch("profile")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
   updateProfile(
     @CurrentUser() establishment: CurrentEstablishmentPayload,
     @Body() updateEstablishmentDto: UpdateEstablishmentDto,
@@ -59,7 +65,8 @@ export class EstablishmentsController {
   }
 
   @Get(":id")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
   findOne(
     @Param("id") id: string,
     // @CurrentUser() establishment: { id: number; phone: string },

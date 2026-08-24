@@ -1,41 +1,103 @@
-// clients/clients.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Client } from './entities/client.entity';
-import { CreateClientDto } from './dto/create-client.dto';
-import { UpdateClientDto } from './dto/update-client.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
+import { Client } from "./entities/client.entity";
+import { CreateClientDto } from "./dto/create-client.dto";
+import { UpdateClientDto } from "./dto/update-client.dto";
+import { Establishment } from "../establishments/entities/establishment.entity";
+import { Service } from "../services/entities/service.entity";
+import { Collaborator } from "../collaborators/entities/collaborator.entity";
 
 @Injectable()
 export class ClientsService {
   constructor(
-    @InjectRepository(Client)
-    private readonly repo: Repository<Client>,
+    @InjectRepository(Client) private readonly repo: Repository<Client>,
+    @InjectRepository(Establishment)
+    private readonly establishmentRepo: Repository<Establishment>,
+    @InjectRepository(Service)
+    private readonly serviceRepo: Repository<Service>,
+    @InjectRepository(Collaborator)
+    private readonly collaboratorRepo: Repository<Collaborator>,
   ) {}
 
-  create(dto: CreateClientDto) {
-    const client = this.repo.create(dto);
-    return this.repo.save(client);
+  async create(dto: CreateClientDto) {
+    const existing = await this.repo.findOne({ where: { phone: dto.phone } });
+    if (existing) throw new BadRequestException("Telefone já cadastrado.");
+    const saved = await this.repo.save(
+      this.repo.create({
+        ...dto,
+        password: await bcrypt.hash(dto.password, 10),
+      }),
+    );
+    const { password, ...safeClient } = saved;
+    void password;
+    return safeClient;
   }
 
-  findAll() {
-    return this.repo.find();
+  async getHome() {
+    const [establishments, services] = await Promise.all([
+      this.establishmentRepo.find({ order: { name: "ASC" } }),
+      this.serviceRepo.find(),
+    ]);
+    return establishments.map((establishment) => {
+      const items = services.filter(
+        (service) => service.establishment_id === establishment.id,
+      );
+      return {
+        ...establishment,
+        service_count: items.length,
+        starting_price:
+          items.length > 0
+            ? Math.min(...items.map((item) => Number(item.price)))
+            : null,
+      };
+    });
+  }
+
+  async getEstablishment(id: number) {
+    const establishment = await this.establishmentRepo.findOne({
+      where: { id },
+    });
+    if (!establishment)
+      throw new NotFoundException("Estabelecimento não encontrado.");
+    const [services, collaborators] = await Promise.all([
+      this.serviceRepo.find({ where: { establishment_id: id } }),
+      this.collaboratorRepo.find({
+        where: { establishment_id: id },
+        relations: { schedule: true, collaboratorServices: true },
+      }),
+    ]);
+    return {
+      establishment,
+      services,
+      collaborators: collaborators.map(({ collaboratorServices, ...item }) => ({
+        ...item,
+        service_ids: collaboratorServices.map((link) => link.service_id),
+      })),
+    };
   }
 
   async findOne(id: number) {
     const client = await this.repo.findOne({ where: { id } });
-    if (!client) throw new NotFoundException(`Client ${id} not found`);
+    if (!client) throw new NotFoundException("Cliente não encontrado.");
     return client;
   }
 
   async update(id: number, dto: UpdateClientDto) {
     const client = await this.findOne(id);
-    Object.assign(client, dto);
-    return this.repo.save(client);
-  }
-
-  async remove(id: number) {
-    const client = await this.findOne(id);
-    return this.repo.remove(client);
+    const payload = { ...dto };
+    if (payload.password)
+      payload.password = await bcrypt.hash(payload.password, 10);
+    else delete payload.password;
+    Object.assign(client, payload);
+    const saved = await this.repo.save(client);
+    const { password, ...safeClient } = saved;
+    void password;
+    return safeClient;
   }
 }

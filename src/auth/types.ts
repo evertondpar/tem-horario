@@ -11,5 +11,14 @@ export interface CurrentCollaboratorPayload {
   establishment_id: number;
 }
 
+export interface CurrentClientPayload {
+  id: number;
+  phone: string;
+  role: "client";
+  establishment_id: null;
+}
+
 export type CurrentUserPayload =
-  CurrentEstablishmentPayload | CurrentCollaboratorPayload;
+  | CurrentEstablishmentPayload
+  | CurrentCollaboratorPayload
+  | CurrentClientPayload;
