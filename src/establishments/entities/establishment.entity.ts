@@ -9,7 +9,7 @@ import {
 } from "typeorm";
 import { Service } from "../../services/entities/service.entity";
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
-import { Appointment } from "src/appointments/entities/appointment.entity";
+import { Appointment } from "../../appointments/entities/appointment.entity";
 
 @Entity("establishments")
 export class Establishment {

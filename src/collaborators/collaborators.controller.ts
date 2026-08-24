@@ -14,8 +14,11 @@ import { UpdateCollaboratorDto } from "./dto/update-collaborator.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 import type { CurrentEstablishmentPayload } from "src/auth/types";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("establishment")
 @Controller("collaborators")
 export class CollaboratorsController {
   constructor(private readonly collaboratorsService: CollaboratorsService) {}

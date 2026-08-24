@@ -13,8 +13,13 @@ import { CreateAppointmentDto } from "./dto/create-appointment.dto";
 import { UpdateAppointmentDto } from "./dto/update-appointment.dto";
 import { ChangeAppointmentStatusDto } from "./dto/change-appointment-status.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import type { CurrentEstablishmentPayload } from "src/auth/types";
+import type {
+  CurrentEstablishmentPayload,
+  CurrentUserPayload,
+} from "src/auth/types";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 
 @UseGuards(JwtAuthGuard)
 @Controller("appointments")
@@ -29,19 +34,22 @@ export class AppointmentsController {
   changeStatus(
     @Param("id") id: string,
     @Body() changeStatusDto: ChangeAppointmentStatusDto,
+    @CurrentUser() user: CurrentUserPayload,
   ) {
     return this.appointmentsService.changeStatus(
       Number(id),
       changeStatusDto.status,
+      user,
     );
   }
 
   @Get()
-  findAll() {
-    return this.appointmentsService.findAll();
+  findAll(@CurrentUser() user: CurrentUserPayload) {
+    return this.appointmentsService.findAllForUser(user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   @Get("collaborators")
   listCollaboratorsAndAppointments(
     @CurrentUser() establishment: CurrentEstablishmentPayload,
@@ -53,11 +61,15 @@ export class AppointmentsController {
   }
 
   @Get(":id")
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   findOne(@Param("id") id: string) {
     return this.appointmentsService.findOne(+id);
   }
 
   @Patch(":id")
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   update(
     @Param("id") id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
@@ -66,6 +78,8 @@ export class AppointmentsController {
   }
 
   @Delete(":id")
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   remove(@Param("id") id: string) {
     return this.appointmentsService.remove(+id);
   }

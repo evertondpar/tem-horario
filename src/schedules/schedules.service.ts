@@ -38,6 +38,10 @@ export class SchedulesService {
     return this.repo.find();
   }
 
+  findForCollaborator(collaboratorId: number) {
+    return this.repo.find({ where: { collaborator_id: collaboratorId } });
+  }
+
   async findOne(id: number) {
     const schedule = await this.repo.findOne({ where: { id } });
     if (!schedule) throw new NotFoundException(`Schedule ${id} not found`);
@@ -119,6 +123,14 @@ export class SchedulesService {
     return this.repo.save(schedule);
   }
 
+  async updateForCollaborator(collaboratorId: number, dto: UpdateScheduleDto) {
+    const schedule = await this.repo.findOne({
+      where: { collaborator_id: collaboratorId },
+    });
+    if (!schedule) throw new NotFoundException("Agenda não encontrada.");
+    return this.update(schedule.id, dto);
+  }
+
   async listCollaboratorsAndSchedules(id: number) {
     const collaborators = await this.collaboratorRepo.find({
       where: {
@@ -129,12 +141,10 @@ export class SchedulesService {
       },
     });
     return {
-      collaborators: collaborators.map(
-        ({ password, schedule, ...collaborator }) => ({
-          ...collaborator,
-          schedule,
-        }),
-      ),
+      collaborators: collaborators.map(({ schedule, ...collaborator }) => ({
+        ...collaborator,
+        schedule,
+      })),
     };
   }
 

@@ -7,7 +7,6 @@ import { Collaborator } from "./entities/collaborator.entity";
 import { Schedule } from "src/schedules/entities/schedule.entity";
 
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
-import { CollaboratorServiceService } from "src/collaborator-service/collaborator-service.service";
 import { SchedulesModule } from "src/schedules/schedules.module";
 
 @Module({
@@ -16,7 +15,7 @@ import { SchedulesModule } from "src/schedules/schedules.module";
     SchedulesModule,
   ],
   controllers: [CollaboratorsController],
-  providers: [CollaboratorsService, CollaboratorServiceService],
+  providers: [CollaboratorsService],
   exports: [CollaboratorsService],
 })
 export class CollaboratorsModule {}

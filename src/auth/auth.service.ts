@@ -36,7 +36,12 @@ export class AuthService {
       throw new UnauthorizedException("Credenciais inválidas");
     }
 
-    const payload = { sub: establishment.id, phone: establishment.phone };
+    const payload = {
+      sub: establishment.id,
+      phone: establishment.phone,
+      role: "establishment",
+      establishment_id: establishment.id,
+    };
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -48,11 +53,13 @@ export class AuthService {
     };
   }
   async loginCollaborator(dto: LoginDto) {
-    const collaborator = await this.collaboratorRepo.findOne({
-      where: { phone: dto.phone },
-    });
+    const collaborator = await this.collaboratorRepo
+      .createQueryBuilder("collaborator")
+      .addSelect("collaborator.password")
+      .where("collaborator.phone = :phone", { phone: dto.phone })
+      .getOne();
 
-    if (!collaborator) {
+    if (!collaborator?.password) {
       throw new UnauthorizedException("Credenciais inválidas");
     }
 
@@ -68,6 +75,7 @@ export class AuthService {
       sub: collaborator.id,
       phone: collaborator.phone,
       establishment_id: collaborator.establishment_id,
+      role: "collaborator",
     };
     const establishment = await this.establishmentRepo.findOne({
       where: { id: collaborator.establishment_id },

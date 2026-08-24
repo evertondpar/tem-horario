@@ -5,9 +5,10 @@ import { SchedulesService } from "./schedules.service";
 import { SchedulesController } from "./schedules.controller";
 import { Schedule } from "./entities/schedule.entity";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
+import { AuthModule } from "src/auth/auth.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Schedule, Collaborator])],
+  imports: [TypeOrmModule.forFeature([Schedule, Collaborator]), AuthModule],
   controllers: [SchedulesController],
   providers: [SchedulesService],
   exports: [SchedulesService],

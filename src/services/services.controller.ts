@@ -14,6 +14,9 @@ import { UpdateServiceDto } from "./dto/update-service.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
 import type { CurrentEstablishmentPayload } from "src/auth/types";
+import type { CurrentUserPayload } from "src/auth/types";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 
 @Controller("services")
 @UseGuards(JwtAuthGuard)
@@ -21,6 +24,8 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUser()
@@ -32,10 +37,9 @@ export class ServicesController {
   @Get()
   findAll(
     @CurrentUser()
-    establishment: CurrentEstablishmentPayload,
+    user: CurrentUserPayload,
   ) {
-    console.log("id ", establishment);
-    return this.servicesService.findAll(establishment.id);
+    return this.servicesService.findAll(user.establishment_id);
   }
 
   @Get(":id")
@@ -44,13 +48,15 @@ export class ServicesController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   update(@Param("id") id: string, @Body() updateServiceDto: UpdateServiceDto) {
     return this.servicesService.update(+id, updateServiceDto);
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
+  @Roles("establishment")
   remove(@Param("id") id: string) {
     return this.servicesService.remove(+id);
   }

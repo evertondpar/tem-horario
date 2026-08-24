@@ -10,7 +10,7 @@ import {
 } from "typeorm";
 import { Collaborator } from "../../collaborators/entities/collaborator.entity";
 import { Service } from "../../services/entities/service.entity";
-import { Establishment } from "src/establishments/entities/establishment.entity";
+import { Establishment } from "../../establishments/entities/establishment.entity";
 
 export enum AppointmentStatus {
   SCHEDULED = "scheduled",

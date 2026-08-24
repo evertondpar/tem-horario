@@ -8,7 +8,7 @@ import { AuthController } from "./auth.controller";
 import { Establishment } from "../establishments/entities/establishment.entity";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
-import { CollaboratorJwtStrategy } from "./strategies/collaborator-jwt.strategy";
+import { RolesGuard } from "./guards/roles.guard";
 
 @Module({
   imports: [
@@ -23,7 +23,7 @@ import { CollaboratorJwtStrategy } from "./strategies/collaborator-jwt.strategy"
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, CollaboratorJwtStrategy],
-  exports: [JwtStrategy, CollaboratorJwtStrategy],
+  providers: [AuthService, JwtStrategy, RolesGuard],
+  exports: [JwtStrategy, RolesGuard],
 })
 export class AuthModule {}

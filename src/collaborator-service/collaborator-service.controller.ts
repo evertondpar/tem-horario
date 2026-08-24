@@ -14,8 +14,11 @@ import { UpdateCollaboratorServiceDto } from "./dto/update-collaborator-service.
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import type { CurrentCollaboratorPayload } from "src/auth/types";
 import { CurrentUser } from "src/auth/decorators/current-establishment.decorator";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("collaborator")
 @Controller("collaborator-service")
 export class CollaboratorServiceController {
   constructor(
@@ -30,6 +33,7 @@ export class CollaboratorServiceController {
     return this.collaboratorServiceService.create(
       createCollaboratorServiceDto,
       collaborator.id,
+      collaborator.establishment_id,
     );
   }
 
@@ -47,15 +51,21 @@ export class CollaboratorServiceController {
   update(
     @Param("id") id: string,
     @Body() updateCollaboratorServiceDto: UpdateCollaboratorServiceDto,
+    @CurrentUser() collaborator: CurrentCollaboratorPayload,
   ) {
-    return this.collaboratorServiceService.update(
+    return this.collaboratorServiceService.updateOwned(
       +id,
       updateCollaboratorServiceDto,
+      collaborator.id,
+      collaborator.establishment_id,
     );
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.collaboratorServiceService.remove(+id);
+  remove(
+    @Param("id") id: string,
+    @CurrentUser() collaborator: CurrentCollaboratorPayload,
+  ) {
+    return this.collaboratorServiceService.removeOwned(+id, collaborator.id);
   }
 }

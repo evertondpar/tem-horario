@@ -3,6 +3,7 @@
 // appointments/appointments.service.ts
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -21,6 +22,7 @@ import {
   ScheduleStatus,
   TimeSlot,
 } from "src/helpers/generateSchedule";
+import type { CurrentUserPayload } from "src/auth/types";
 
 @Injectable()
 export class AppointmentsService {
@@ -238,8 +240,15 @@ export class AppointmentsService {
     });
   }
 
-  findAll() {
-    return this.appointmentRepo.find();
+  findAllForUser(user: CurrentUserPayload) {
+    return this.appointmentRepo.find({
+      where:
+        user.role === "collaborator"
+          ? { collaborator_id: user.id }
+          : { establishment_id: user.establishment_id },
+      relations: { collaborator: true, service: true },
+      order: { appointment_date: "ASC", start_time: "ASC" },
+    });
   }
 
   async findOne(id: number) {
@@ -259,7 +268,11 @@ export class AppointmentsService {
     const appointment = await this.findOne(id);
     return this.appointmentRepo.remove(appointment);
   }
-  async changeStatus(id: number, status: AppointmentStatus) {
+  async changeStatus(
+    id: number,
+    status: AppointmentStatus,
+    user: CurrentUserPayload,
+  ) {
     return this.dataSource.transaction(async (manager) => {
       const appointmentRepo = manager.getRepository(Appointment);
       const scheduleRepo = manager.getRepository(Schedule);
@@ -274,6 +287,14 @@ export class AppointmentsService {
 
       if (!appointment) {
         throw new NotFoundException("Agendamento não encontrado.");
+      }
+
+      const canChange =
+        user.role === "collaborator"
+          ? appointment.collaborator_id === user.id
+          : appointment.establishment_id === user.establishment_id;
+      if (!canChange) {
+        throw new ForbiddenException("Agendamento fora do seu escopo.");
       }
 
       /**
