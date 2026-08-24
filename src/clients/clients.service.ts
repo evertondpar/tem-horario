@@ -60,6 +60,37 @@ export class ClientsService {
   }
 
   async getEstablishment(id: number) {
+    type PublicDaySchedule = { day: string | null; slots: number[] };
+    const nowParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date())
+      .reduce<Record<string, string>>((parts, part) => {
+        if (part.type !== "literal") parts[part.type] = part.value;
+        return parts;
+      }, {});
+    const today = `${nowParts.year}-${nowParts.month}-${nowParts.day}`;
+    const currentMinutes =
+      Number(nowParts.hour) * 60 +
+      Number(nowParts.minute) +
+      Number(nowParts.second) / 60;
+    const weekdays = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ] as const;
+
     const establishment = await this.establishmentRepo.findOne({
       where: { id },
     });
@@ -75,10 +106,37 @@ export class ClientsService {
     return {
       establishment,
       services,
-      collaborators: collaborators.map(({ collaboratorServices, ...item }) => ({
-        ...item,
-        service_ids: collaboratorServices.map((link) => link.service_id),
-      })),
+      collaborators: collaborators.map(({ collaboratorServices, ...item }) => {
+        const publicSchedule = item.schedule
+          ? {
+              ...item.schedule,
+              ...Object.fromEntries(
+                weekdays.map((weekday) => {
+                  const day = item.schedule[
+                    weekday
+                  ] as PublicDaySchedule | null;
+                  return [
+                    weekday,
+                    day?.day === today
+                      ? {
+                          ...day,
+                          slots: day.slots.map((status, index) =>
+                            index * 30 < currentMinutes ? 2 : status,
+                          ),
+                        }
+                      : day,
+                  ];
+                }),
+              ),
+            }
+          : null;
+
+        return {
+          ...item,
+          schedule: publicSchedule,
+          service_ids: collaboratorServices.map((link) => link.service_id),
+        };
+      }),
     };
   }
 
