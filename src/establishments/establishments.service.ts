@@ -10,6 +10,7 @@ import { DataSource, In, Repository } from "typeorm";
 import { Establishment } from "./entities/establishment.entity";
 import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
 import { UpdateEstablishmentDto } from "./dto/update-establishment.dto";
+import { CompleteOnboardingDto } from "./dto/complete-onboarding.dto";
 import * as bcrypt from "bcrypt";
 import { Service } from "src/services/entities/service.entity";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
@@ -44,12 +45,127 @@ export class EstablishmentsService {
   ) {}
 
   async create(dto: CreateEstablishmentDto) {
+    const existing = await this.repo.findOne({ where: { phone: dto.phone } });
+    if (existing) throw new BadRequestException("Telefone já cadastrado.");
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const establishment = this.repo.create({
       ...dto,
       password: hashedPassword,
+      onboarding_completed: false,
     });
-    return this.repo.save(establishment);
+    const saved = await this.repo.save(establishment);
+    const { password, ...safeEstablishment } = saved;
+    void password;
+    return safeEstablishment;
+  }
+
+  async getOnboardingStatus(id: number) {
+    const [establishment, servicesCount, collaborators] = await Promise.all([
+      this.repo.findOne({ where: { id } }),
+      this.serviceRepo.count({ where: { establishment_id: id } }),
+      this.collaboratorRepo.find({
+        where: { establishment_id: id },
+        relations: { schedule: true, collaboratorServices: true },
+      }),
+    ]);
+    if (!establishment) {
+      throw new NotFoundException("Estabelecimento não encontrado.");
+    }
+    const hasCollaborator = collaborators.length > 0;
+    const hasSchedule = collaborators.some((item) => !!item.schedule);
+    const hasAssignedService = collaborators.some(
+      (item) => item.collaboratorServices.length > 0,
+    );
+    return {
+      completed: establishment.onboarding_completed,
+      steps: {
+        profile: !!establishment.address,
+        service: servicesCount > 0,
+        collaborator: hasCollaborator,
+        schedule: hasSchedule,
+        assigned_service: hasAssignedService,
+      },
+    };
+  }
+
+  async completeOnboarding(id: number, dto: CompleteOnboardingDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const establishmentRepo = manager.getRepository(Establishment);
+      const serviceRepo = manager.getRepository(Service);
+      const collaboratorRepo = manager.getRepository(Collaborator);
+      const scheduleRepo = manager.getRepository(Schedule);
+      const linkRepo = manager.getRepository(CollaboratorService);
+
+      const establishment = await establishmentRepo.findOne({ where: { id } });
+      if (!establishment)
+        throw new NotFoundException("Estabelecimento não encontrado.");
+      if (establishment.onboarding_completed) {
+        throw new BadRequestException("Onboarding já concluído.");
+      }
+      const openIndex = TimeSlot[dto.open_hour.replace(":", "")];
+      const closeIndex = TimeSlot[dto.close_hour.replace(":", "")];
+      if (
+        openIndex === undefined ||
+        closeIndex === undefined ||
+        openIndex >= closeIndex
+      ) {
+        throw new BadRequestException(
+          "Horários devem usar intervalos de 30 minutos e a abertura deve ser anterior ao fechamento.",
+        );
+      }
+      if (dto.service_duration_minutes % 30 !== 0) {
+        throw new BadRequestException(
+          "A duração do serviço deve ser múltipla de 30 minutos.",
+        );
+      }
+      const phoneInUse = await collaboratorRepo.findOne({
+        where: { phone: dto.collaborator_phone },
+      });
+      if (phoneInUse)
+        throw new BadRequestException("Telefone do colaborador já cadastrado.");
+
+      const service = await serviceRepo.save(
+        serviceRepo.create({
+          establishment_id: id,
+          name: dto.service_name,
+          duration_minutes: dto.service_duration_minutes,
+          price: dto.service_price,
+        }),
+      );
+      const collaborator = await collaboratorRepo.save(
+        collaboratorRepo.create({
+          establishment_id: id,
+          name: dto.collaborator_name,
+          phone: dto.collaborator_phone,
+          password: await bcrypt.hash(dto.collaborator_password, 10),
+        }),
+      );
+      const week: WeekCloseAndOpenHours = Array.from({ length: 6 }, () => ({
+        open: dto.open_hour,
+        close: dto.close_hour,
+      }));
+      week.push(null);
+      await scheduleRepo.save(
+        scheduleRepo.create(generateSchedule(collaborator.id, week)),
+      );
+      await linkRepo.save(
+        linkRepo.create({
+          collaborator_id: collaborator.id,
+          service_id: service.id,
+        }),
+      );
+      establishment.address = dto.address;
+      establishment.open_hour = dto.open_hour;
+      establishment.close_hour = dto.close_hour;
+      establishment.onboarding_completed = true;
+      await establishmentRepo.save(establishment);
+
+      return {
+        completed: true,
+        service: { id: service.id, name: service.name },
+        collaborator: { id: collaborator.id, name: collaborator.name },
+      };
+    });
   }
 
   findAll() {
@@ -234,15 +350,15 @@ export class EstablishmentsService {
             ] as const;
 
             for (const day of days) {
+              const currentSlots = collaborator.schedule[day]
+                .slots as ScheduleStatus[];
               schedulePayload[day].slots = schedulePayload[day].slots.map(
                 (slot, index) =>
-                  collaborator.schedule[day].slots[index] ===
-                  ScheduleStatus.OCCUPIED
+                  currentSlots[index] === ScheduleStatus.OCCUPIED
                     ? ScheduleStatus.OCCUPIED
                     : index >= currentOpenIndex &&
                         index < currentCloseIndex &&
-                        collaborator.schedule[day].slots[index] ===
-                          ScheduleStatus.UNAVAILABLE
+                        currentSlots[index] === ScheduleStatus.UNAVAILABLE
                       ? ScheduleStatus.UNAVAILABLE
                       : slot,
               );
@@ -263,6 +379,7 @@ export class EstablishmentsService {
       Object.assign(establishment, payload);
       const updated = await establishmentRepo.save(establishment);
       const { password, ...profile } = updated;
+      void password;
       return profile;
     });
   }

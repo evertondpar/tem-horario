@@ -44,6 +44,9 @@ export class Establishment {
   @Column({ select: false })
   password: string;
 
+  @Column({ default: true })
+  onboarding_completed: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

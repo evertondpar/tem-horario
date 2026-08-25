@@ -16,6 +16,7 @@ import { CurrentUser } from "src/auth/decorators/current-establishment.decorator
 import type { CurrentEstablishmentPayload } from "src/auth/types";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { RolesGuard } from "src/auth/guards/roles.guard";
+import { CompleteOnboardingDto } from "./dto/complete-onboarding.dto";
 
 @Controller("establishments")
 export class EstablishmentsController {
@@ -24,6 +25,25 @@ export class EstablishmentsController {
   @Post()
   create(@Body() createEstablishmentDto: CreateEstablishmentDto) {
     return this.establishmentsService.create(createEstablishmentDto);
+  }
+
+  @Get("onboarding")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
+  getOnboardingStatus(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+  ) {
+    return this.establishmentsService.getOnboardingStatus(establishment.id);
+  }
+
+  @Post("onboarding/complete")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
+  completeOnboarding(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+    @Body() dto: CompleteOnboardingDto,
+  ) {
+    return this.establishmentsService.completeOnboarding(establishment.id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -54,6 +54,7 @@ export class AuthService {
         id: establishment.id,
         name: establishment.name,
         phone: establishment.phone,
+        onboarding_completed: establishment.onboarding_completed,
       },
     };
   }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // establishments/dto/create-establishment.dto.ts
 import { IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
@@ -14,6 +13,10 @@ export class CreateEstablishmentDto {
   @IsOptional()
   @IsString()
   photo?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
 
   @IsString()
   @IsNotEmpty()

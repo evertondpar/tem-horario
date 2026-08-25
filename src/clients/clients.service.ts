@@ -41,7 +41,10 @@ export class ClientsService {
 
   async getHome() {
     const [establishments, services] = await Promise.all([
-      this.establishmentRepo.find({ order: { name: "ASC" } }),
+      this.establishmentRepo.find({
+        where: { onboarding_completed: true },
+        order: { name: "ASC" },
+      }),
       this.serviceRepo.find(),
     ]);
     return establishments.map((establishment) => {
@@ -96,6 +99,9 @@ export class ClientsService {
     });
     if (!establishment)
       throw new NotFoundException("Estabelecimento não encontrado.");
+    if (!establishment.onboarding_completed) {
+      throw new NotFoundException("Estabelecimento ainda não está disponível.");
+    }
     const [services, collaborators] = await Promise.all([
       this.serviceRepo.find({ where: { establishment_id: id } }),
       this.collaboratorRepo.find({
