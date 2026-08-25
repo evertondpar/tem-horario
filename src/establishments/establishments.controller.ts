@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from "@nestjs/common";
 import { EstablishmentsService } from "./establishments.service";
 import { CreateEstablishmentDto } from "./dto/create-establishment.dto";
@@ -17,6 +19,7 @@ import type { CurrentEstablishmentPayload } from "src/auth/types";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { CompleteOnboardingDto } from "./dto/complete-onboarding.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller("establishments")
 export class EstablishmentsController {
@@ -82,6 +85,17 @@ export class EstablishmentsController {
       establishment.id,
       updateEstablishmentDto,
     );
+  }
+
+  @Patch("photo")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
+  @UseInterceptors(FileInterceptor("file"))
+  updatePhoto(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.establishmentsService.updatePhoto(establishment.id, file);
   }
 
   @Get(":id")

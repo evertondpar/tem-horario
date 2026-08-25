@@ -8,6 +8,7 @@ import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 import { Appointment } from "src/appointments/entities/appointment.entity";
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { SchedulesModule } from "src/schedules/schedules.module";
+import { CloudinaryModule } from "src/cloudinary/cloudinary.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SchedulesModule } from "src/schedules/schedules.module";
       CollaboratorService,
     ]),
     SchedulesModule,
+    CloudinaryModule,
   ],
   controllers: [EstablishmentsController],
   providers: [EstablishmentsService],

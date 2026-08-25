@@ -27,6 +27,7 @@ import {
   TimeSlot,
   WeekCloseAndOpenHours,
 } from "src/helpers/generateSchedule";
+import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 
 @Injectable()
 export class EstablishmentsService {
@@ -42,6 +43,7 @@ export class EstablishmentsService {
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
     private readonly dataSource: DataSource,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async create(dto: CreateEstablishmentDto) {
@@ -166,6 +168,15 @@ export class EstablishmentsService {
         collaborator: { id: collaborator.id, name: collaborator.name },
       };
     });
+  }
+
+  async updatePhoto(id: number, file: Express.Multer.File) {
+    const establishment = await this.findOne(id);
+
+    const upload = await this.cloudinaryService.uploadImage(file);
+    establishment.photo = upload?.secure_url;
+
+    return this.repo.save(establishment);
   }
 
   findAll() {
