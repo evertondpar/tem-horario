@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // collaborator-service/dto/create-collaborator-service.dto.ts
 import { IsInt, IsPositive } from "class-validator";
 

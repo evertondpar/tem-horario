@@ -8,11 +8,13 @@ import { Schedule } from "src/schedules/entities/schedule.entity";
 
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { SchedulesModule } from "src/schedules/schedules.module";
+import { CloudinaryModule } from "src/cloudinary/cloudinary.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Collaborator, Schedule, CollaboratorService]),
     SchedulesModule,
+    CloudinaryModule,
   ],
   controllers: [CollaboratorsController],
   providers: [CollaboratorsService],

@@ -2,13 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
-import { Appointment, AppointmentStatus } from "src/appointments/entities/appointment.entity";
+import {
+  Appointment,
+  AppointmentStatus,
+} from "src/appointments/entities/appointment.entity";
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 import { Schedule } from "src/schedules/entities/schedule.entity";
-import {
-  generateSchedule,
-  ScheduleStatus,
-} from "src/helpers/generateSchedule";
+import { generateSchedule, ScheduleStatus } from "src/helpers/generateSchedule";
 
 dayjs.extend(isoWeek);
 
@@ -46,7 +46,9 @@ export class DevelopmentService {
   }
 
   private formatTime(slot: number): string {
-    const hour = Math.floor(slot / 2).toString().padStart(2, "0");
+    const hour = Math.floor(slot / 2)
+      .toString()
+      .padStart(2, "0");
     const minutes = slot % 2 === 0 ? "00" : "30";
     return `${hour}:${minutes}`;
   }
@@ -108,16 +110,21 @@ export class DevelopmentService {
 
           for (const day of DAYS) {
             const daySchedule = this.getDaySchedule(schedule, day);
-            const startSlot = daySchedule.slots.findIndex((_, index) =>
-              index + durationSlots <= daySchedule.slots.length &&
-              daySchedule.slots
-                .slice(index, index + durationSlots)
-                .every((status) => status === ScheduleStatus.AVAILABLE),
+            const startSlot = daySchedule.slots.findIndex(
+              (_, index) =>
+                index + durationSlots <= daySchedule.slots.length &&
+                daySchedule.slots
+                  .slice(index, index + durationSlots)
+                  .every((status) => status === ScheduleStatus.AVAILABLE),
             );
 
             if (startSlot === -1) continue;
 
-            for (let slot = startSlot; slot < startSlot + durationSlots; slot++) {
+            for (
+              let slot = startSlot;
+              slot < startSlot + durationSlots;
+              slot++
+            ) {
               daySchedule.slots[slot] = ScheduleStatus.OCCUPIED;
             }
 

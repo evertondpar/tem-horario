@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // services/dto/create-service.dto.ts
 import {
   IsInt,

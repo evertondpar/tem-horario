@@ -12,6 +12,7 @@ import { UpdateClientDto } from "./dto/update-client.dto";
 import { Establishment } from "../establishments/entities/establishment.entity";
 import { Service } from "../services/entities/service.entity";
 import { Collaborator } from "../collaborators/entities/collaborator.entity";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Injectable()
 export class ClientsService {
@@ -23,7 +24,18 @@ export class ClientsService {
     private readonly serviceRepo: Repository<Service>,
     @InjectRepository(Collaborator)
     private readonly collaboratorRepo: Repository<Collaborator>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
+
+  async updatePhoto(id: number, file: Express.Multer.File) {
+    const client = await this.findOne(id);
+    const upload = await this.cloudinaryService.uploadImage(file);
+    client.photo = upload.secure_url;
+    const saved = await this.repo.save(client);
+    const { password, ...safeClient } = saved;
+    void password;
+    return safeClient;
+  }
 
   async create(dto: CreateClientDto) {
     const existing = await this.repo.findOne({ where: { phone: dto.phone } });

@@ -206,8 +206,9 @@ export class EstablishmentsService {
     return Establishment;
   }
   async getDashboardInfos(id: number): Promise<DashboardResponse> {
-    const establishment = await this.repo.exists({
+    const establishment = await this.repo.findOne({
       where: { id },
+      select: { id: true, name: true, phone: true, photo: true },
     });
 
     if (!establishment) {
@@ -236,6 +237,7 @@ export class EstablishmentsService {
       }),
     ]);
     return {
+      establishment,
       services,
       collaborators,
       appointments: nextAppointments,

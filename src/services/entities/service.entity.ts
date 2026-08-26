@@ -8,12 +8,12 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { Establishment } from '../../establishments/entities/establishment.entity';
-import { CollaboratorService } from '../../collaborator-service/entities/collaborator-service.entity';
-import { Appointment } from '../../appointments/entities/appointment.entity';
+} from "typeorm";
+import { Establishment } from "../../establishments/entities/establishment.entity";
+import { CollaboratorService } from "../../collaborator-service/entities/collaborator-service.entity";
+import { Appointment } from "../../appointments/entities/appointment.entity";
 
-@Entity('services')
+@Entity("services")
 export class Service {
   @PrimaryGeneratedColumn()
   id: number;
@@ -22,7 +22,7 @@ export class Service {
   establishment_id: number;
 
   @ManyToOne(() => Establishment, (establishment) => establishment.services)
-  @JoinColumn({ name: 'establishment_id' })
+  @JoinColumn({ name: "establishment_id" })
   establishment: Establishment;
 
   @Column()
@@ -31,7 +31,7 @@ export class Service {
   @Column()
   duration_minutes: number;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column("decimal", { precision: 10, scale: 2 })
   price: number;
 
   @OneToMany(() => CollaboratorService, (cs) => cs.service)

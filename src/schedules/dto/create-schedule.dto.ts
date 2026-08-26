@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // schedules/dto/create-schedule.dto.ts
 import { Type } from "class-transformer";
 import {

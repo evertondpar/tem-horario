@@ -93,6 +93,7 @@ export class AuthService {
         id: collaborator.id,
         name: collaborator.name,
         phone: collaborator.phone,
+        photo: collaborator.photo,
       },
       establishment: { ...establishment, password: "" },
       //devolver serviços

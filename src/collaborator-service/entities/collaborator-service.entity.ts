@@ -7,11 +7,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-} from 'typeorm';
-import { Collaborator } from '../../collaborators/entities/collaborator.entity';
-import { Service } from '../../services/entities/service.entity';
+} from "typeorm";
+import { Collaborator } from "../../collaborators/entities/collaborator.entity";
+import { Service } from "../../services/entities/service.entity";
 
-@Entity('collaborator_service')
+@Entity("collaborator_service")
 export class CollaboratorService {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,14 +23,14 @@ export class CollaboratorService {
     () => Collaborator,
     (collaborator) => collaborator.collaboratorServices,
   )
-  @JoinColumn({ name: 'collaborator_id' })
+  @JoinColumn({ name: "collaborator_id" })
   collaborator: Collaborator;
 
   @Column()
   service_id: number;
 
   @ManyToOne(() => Service, (service) => service.collaboratorServices)
-  @JoinColumn({ name: 'service_id' })
+  @JoinColumn({ name: "service_id" })
   service: Service;
 
   @CreateDateColumn()

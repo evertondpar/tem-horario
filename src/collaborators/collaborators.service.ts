@@ -13,6 +13,7 @@ import * as bcrypt from "bcrypt";
 import { SchedulesService } from "src/schedules/schedules.service";
 import { CollaboratorService } from "src/collaborator-service/entities/collaborator-service.entity";
 import { Schedule } from "src/schedules/entities/schedule.entity";
+import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 
 @Injectable()
 export class CollaboratorsService {
@@ -24,7 +25,27 @@ export class CollaboratorsService {
     private readonly scheduleRepo: Repository<Schedule>,
     @InjectRepository(CollaboratorService)
     private readonly collaboratorServiceRepo: Repository<CollaboratorService>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
+
+  async updatePhoto(
+    id: number,
+    establishmentId: number,
+    file: Express.Multer.File,
+  ) {
+    const collaborator = await this.repo.findOne({
+      where: { id, establishment_id: establishmentId },
+    });
+    if (!collaborator) {
+      throw new NotFoundException("Colaborador não encontrado.");
+    }
+    const upload = await this.cloudinaryService.uploadImage(file);
+    collaborator.photo = upload.secure_url;
+    const saved = await this.repo.save(collaborator);
+    const { password, ...safeCollaborator } = saved;
+    void password;
+    return safeCollaborator;
+  }
 
   async create(dto: CreateCollaboratorDto, establishment_id: number) {
     const find = await this.repo.findOne({ where: { phone: dto.phone } });
@@ -49,6 +70,17 @@ export class CollaboratorsService {
 
   findAll(establishment_id: number) {
     return this.repo.find({ where: { establishment_id: establishment_id } });
+  }
+
+  async getDashboard(id: number) {
+    const collaborator = await this.repo.findOne({
+      where: { id },
+      select: { id: true, name: true, phone: true, photo: true },
+    });
+    if (!collaborator) {
+      throw new NotFoundException("Colaborador não encontrado.");
+    }
+    return { collaborator };
   }
 
   async findOne(id: number) {

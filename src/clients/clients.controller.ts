@@ -6,7 +6,10 @@ import {
   Patch,
   Post,
   UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { ClientsService } from "./clients.service";
 import { CreateClientDto } from "./dto/create-client.dto";
 import { UpdateClientDto } from "./dto/update-client.dto";
@@ -50,5 +53,16 @@ export class ClientsController {
     @Body() dto: UpdateClientDto,
   ) {
     return this.clientsService.update(client.id, dto);
+  }
+
+  @Patch("me/photo")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("client")
+  @UseInterceptors(FileInterceptor("file"))
+  updatePhoto(
+    @CurrentUser() client: CurrentClientPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.clientsService.updatePhoto(client.id, file);
   }
 }
