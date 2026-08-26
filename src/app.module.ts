@@ -14,6 +14,7 @@ import { AppointmentsModule } from "./appointments/appointments.module";
 import { AuthModule } from "./auth/auth.module";
 import { DevelopmentModule } from "./development/development.module";
 import { CloudinaryModule } from "./cloudinary/cloudinary.module";
+import { DevicesModule } from "./devices/devices.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CloudinaryModule } from "./cloudinary/cloudinary.module";
         AuthModule,
         DevelopmentModule,
         CloudinaryModule,
+        DevicesModule,
       ],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -54,6 +56,7 @@ import { CloudinaryModule } from "./cloudinary/cloudinary.module";
     AuthModule,
     DevelopmentModule,
     CloudinaryModule,
+    DevicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
