@@ -28,6 +28,10 @@ export class DevicesController {
     return this.devicesService.create(dto, user);
   }
 
+  @Get("test")
+  notificationTest(@CurrentUser() user: CurrentUserPayload) {
+    return this.devicesService.notificationTest(user);
+  }
   @Get()
   findAll(@CurrentUser() user: CurrentUserPayload) {
     return this.devicesService.findAll(user);
