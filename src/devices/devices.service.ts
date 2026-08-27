@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import type { CurrentUserPayload } from "../auth/types";
@@ -9,6 +9,8 @@ import { FirebaseService } from "src/firebase/firebase.service";
 
 @Injectable()
 export class DevicesService {
+  private readonly logger = new Logger(DevicesService.name);
+
   constructor(
     @InjectRepository(Device)
     private readonly repo: Repository<Device>,
@@ -58,18 +60,62 @@ export class DevicesService {
     const device = await this.findOne(id, user);
     return this.repo.remove(device);
   }
-  async notificationTest(user: CurrentUserPayload) {
-    const devices = await this.findAll(user);
-    console.log("devices: ", devices);
-    if (devices?.length >= 1) {
-      const ntf = await this.firebaseService.sendPush(
-        devices[0].token,
-        "Teste Notificaçã",
-        "A notificação foi enviada!",
-      );
-      console.log("ntf ", ntf);
-    }
 
-    return true;
+  async sendNotification(
+    userId: number,
+    userRole: UserRole,
+    title: string,
+    body: string,
+    url: string,
+    metadata: Record<string, string> = {},
+  ) {
+    const devices = await this.repo.find({
+      where: { user_id: userId, user_role: userRole, active: true },
+    });
+
+    const results = await Promise.all(
+      devices.map(async (device) => {
+        try {
+          await this.firebaseService.sendPush(
+            device.token,
+            title,
+            body,
+            url,
+            metadata,
+          );
+          return true;
+        } catch (error: unknown) {
+          const code =
+            error && typeof error === "object" && "code" in error
+              ? String(error.code)
+              : "unknown";
+          if (
+            code === "messaging/registration-token-not-registered" ||
+            code === "messaging/invalid-registration-token"
+          ) {
+            await this.repo.update(device.id, { active: false });
+          }
+          this.logger.warn(
+            `Falha ao enviar push para device ${device.id}: ${code}`,
+          );
+          return false;
+        }
+      }),
+    );
+
+    return {
+      total: devices.length,
+      sent: results.filter(Boolean).length,
+    };
+  }
+
+  async notificationTest(user: CurrentUserPayload) {
+    return this.sendNotification(
+      user.id,
+      user.role as UserRole,
+      "Teste de notificação",
+      "A notificação foi enviada!",
+      "/",
+    );
   }
 }

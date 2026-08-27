@@ -9,13 +9,20 @@ export class FirebaseService {
     private readonly firebaseApp: App,
   ) {}
 
-  async sendPush(token: string, title: string, body: string) {
+  async sendPush(
+    token: string,
+    title: string,
+    body: string,
+    url = "/",
+    metadata: Record<string, string> = {},
+  ) {
     return getMessaging(this.firebaseApp).send({
       token,
       data: {
         title,
         body,
-        url: "/",
+        url,
+        ...metadata,
       },
     });
   }

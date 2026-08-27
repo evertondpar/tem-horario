@@ -24,6 +24,8 @@ import {
 } from "src/helpers/generateSchedule";
 import type { CurrentUserPayload } from "src/auth/types";
 import { Client } from "src/clients/entities/client.entity";
+import { DevicesService } from "src/devices/devices.service";
+import { UserRole } from "src/devices/entities/device.entity";
 
 @Injectable()
 export class AppointmentsService {
@@ -43,7 +45,26 @@ export class AppointmentsService {
     @InjectRepository(CollaboratorService)
     private readonly collaboratorServiceRepo: Repository<CollaboratorService>,
     private readonly dataSource: DataSource,
+    private readonly devicesService: DevicesService,
   ) {}
+
+  private formatAppointmentDate(date: string) {
+    const [year, month, day] = date.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  private notifySafely(
+    userId: number,
+    userRole: UserRole,
+    title: string,
+    body: string,
+    url: string,
+    metadata: Record<string, string>,
+  ) {
+    void this.devicesService
+      .sendNotification(userId, userRole, title, body, url, metadata)
+      .catch(() => undefined);
+  }
 
   private getDaySchedule(schedule: Schedule, appointmentDate: string): any {
     const days: any[] = [
@@ -146,7 +167,7 @@ export class AppointmentsService {
   }
 
   async create(dto: CreateAppointmentDto, clientId: number) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       if (
         dayjs(`${dto.appointment_date}T${dto.start_time}`).isBefore(dayjs())
       ) {
@@ -262,8 +283,23 @@ export class AppointmentsService {
       await appointmentRepo.save(appointment);
       await scheduleRepo.save(schedule);
 
-      return appointment;
+      return { appointment, collaborator, service, client };
     });
+
+    this.notifySafely(
+      result.collaborator.id,
+      UserRole.COLLABORATOR,
+      "Novo agendamento",
+      `${result.client.name} agendou ${result.service.name} para ${this.formatAppointmentDate(result.appointment.appointment_date)} às ${result.appointment.start_time.slice(0, 5)}.`,
+      "/colaborador/agendamentos",
+      {
+        type: "appointment_updated",
+        appointment_id: String(result.appointment.id),
+        status: result.appointment.status,
+      },
+    );
+
+    return result.appointment;
   }
 
   findAllForUser(user: CurrentUserPayload) {
@@ -301,7 +337,7 @@ export class AppointmentsService {
     status: AppointmentStatus,
     user: CurrentUserPayload,
   ) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const appointmentRepo = manager.getRepository(Appointment);
       const scheduleRepo = manager.getRepository(Schedule);
       const serviceRepo = manager.getRepository(Service);
@@ -316,6 +352,7 @@ export class AppointmentsService {
       if (!appointment) {
         throw new NotFoundException("Agendamento não encontrado.");
       }
+      const previousStatus = appointment.status;
 
       const canChange =
         user.role === "collaborator"
@@ -412,8 +449,74 @@ export class AppointmentsService {
       await scheduleRepo.save(schedule);
       await appointmentRepo.save(appointment);
 
-      return appointment;
+      return { appointment, service, previousStatus };
     });
+
+    const { appointment, service, previousStatus } = result;
+    if (previousStatus === status) return appointment;
+    const when = `${this.formatAppointmentDate(appointment.appointment_date)} às ${appointment.start_time.slice(0, 5)}`;
+
+    if (
+      user.role === "collaborator" &&
+      appointment.client_id &&
+      status === AppointmentStatus.CONFIRMED
+    ) {
+      this.notifySafely(
+        appointment.client_id,
+        UserRole.CLIENT,
+        "Agendamento confirmado",
+        `Seu horário para ${service.name}, em ${when}, foi confirmado.`,
+        "/meus-agendamentos",
+        {
+          type: "appointment_updated",
+          appointment_id: String(appointment.id),
+          status: appointment.status,
+        },
+      );
+    }
+
+    if (
+      user.role === "collaborator" &&
+      appointment.client_id &&
+      status === AppointmentStatus.REFUSED
+    ) {
+      this.notifySafely(
+        appointment.client_id,
+        UserRole.CLIENT,
+        "Agendamento recusado",
+        `Seu horário para ${service.name}, em ${when}, não pôde ser aceito.`,
+        "/meus-agendamentos",
+        {
+          type: "appointment_updated",
+          appointment_id: String(appointment.id),
+          status: appointment.status,
+        },
+      );
+    }
+
+    if (
+      user.role === "collaborator" &&
+      status === AppointmentStatus.COMPLETED
+    ) {
+      const collaborator = await this.collaboratorRepo.findOne({
+        where: { id: appointment.collaborator_id },
+        select: { id: true, name: true },
+      });
+      this.notifySafely(
+        appointment.establishment_id,
+        UserRole.ESTABLISHMENT,
+        "Atendimento concluído",
+        `${collaborator?.name ?? "O colaborador"} finalizou o atendimento de ${appointment.client_name} (${service.name}).`,
+        "/agendamentos",
+        {
+          type: "appointment_updated",
+          appointment_id: String(appointment.id),
+          status: appointment.status,
+        },
+      );
+    }
+
+    return appointment;
   }
   async listCollaboratorsAndAppointments(id: number) {
     const collaborators = await this.collaboratorRepo.find({

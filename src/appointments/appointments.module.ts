@@ -10,6 +10,7 @@ import { CollaboratorService } from "src/collaborator-service/entities/collabora
 import { Collaborator } from "src/collaborators/entities/collaborator.entity";
 import { AuthModule } from "src/auth/auth.module";
 import { Client } from "src/clients/entities/client.entity";
+import { DevicesModule } from "src/devices/devices.module";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Client } from "src/clients/entities/client.entity";
       Client,
     ]),
     AuthModule,
+    DevicesModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
