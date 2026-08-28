@@ -43,7 +43,11 @@ import { DevicesModule } from "./devices/devices.module";
         password: config.get("DB_PASS"),
         database: config.get("DB_NAME"),
         entities: [__dirname + "/**/*.entity{.ts,.js}"],
-        synchronize: true, // só em dev! nunca em produção
+        ssl: {
+          ca: process.env.DB_CA_CERT?.replace(/\\n/g, "\n"),
+          // rejectUnauthorized: false,
+        },
+        // synchronize: true, // só em dev! nunca em produção
       }),
     }),
     EstablishmentsModule,
