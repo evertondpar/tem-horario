@@ -46,6 +46,12 @@ export class EstablishmentsService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  private formatAddress(data: Pick<Establishment, "street" | "address_number" | "address_complement" | "neighborhood" | "city" | "state" | "zip_code">) {
+    const street = [data.street, data.address_number].filter(Boolean).join(", ");
+    const locality = [data.neighborhood, data.city, data.state].filter(Boolean).join(" - ");
+    return [street, data.address_complement, locality, data.zip_code ? `CEP ${data.zip_code}` : ""].filter(Boolean).join(" · ");
+  }
+
   async create(dto: CreateEstablishmentDto) {
     const existing = await this.repo.findOne({ where: { phone: dto.phone } });
     if (existing) throw new BadRequestException("Telefone já cadastrado.");
@@ -157,6 +163,15 @@ export class EstablishmentsService {
         }),
       );
       establishment.address = dto.address;
+      establishment.zip_code = dto.zip_code.replace(/\D/g, "");
+      establishment.street = dto.street;
+      establishment.address_number = dto.address_number;
+      establishment.address_complement = dto.address_complement;
+      establishment.neighborhood = dto.neighborhood;
+      establishment.city = dto.city;
+      establishment.state = dto.state.toUpperCase();
+      establishment.cover_position = dto.cover_position ?? 50;
+      establishment.address = this.formatAddress(establishment);
       establishment.open_hour = dto.open_hour;
       establishment.close_hour = dto.close_hour;
       establishment.onboarding_completed = true;
@@ -179,6 +194,13 @@ export class EstablishmentsService {
     return this.repo.save(establishment);
   }
 
+  async updateCoverPhoto(id: number, file: Express.Multer.File) {
+    const establishment = await this.findOne(id);
+    const upload = await this.cloudinaryService.uploadImage(file);
+    establishment.cover_photo = upload.secure_url;
+    return this.repo.save(establishment);
+  }
+
   findAll() {
     return this.repo.find();
   }
@@ -196,7 +218,18 @@ export class EstablishmentsService {
         name: true,
         phone: true,
         address: true,
+        zip_code: true,
+        street: true,
+        address_number: true,
+        address_complement: true,
+        neighborhood: true,
+        city: true,
+        state: true,
         photo: true,
+        cover_photo: true,
+        cover_position: true,
+        description: true,
+        cancellation_policy: true,
         open_hour: true,
         close_hour: true,
       },
@@ -387,6 +420,16 @@ export class EstablishmentsService {
 
       if (payload.password) {
         payload.password = await bcrypt.hash(payload.password, 10);
+      }
+
+      const changesAddress = ["zip_code", "street", "address_number", "address_complement", "neighborhood", "city", "state"].some(
+        (field) => dto[field as keyof UpdateEstablishmentDto] !== undefined,
+      );
+      if (changesAddress) {
+        Object.assign(establishment, payload);
+        establishment.zip_code = establishment.zip_code.replace(/\D/g, "");
+        establishment.state = establishment.state.toUpperCase();
+        payload.address = this.formatAddress(establishment);
       }
 
       Object.assign(establishment, payload);

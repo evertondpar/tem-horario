@@ -310,7 +310,7 @@ export class AppointmentsService {
           : user.role === "client"
             ? { client_id: user.id }
             : { establishment_id: user.establishment_id },
-      relations: { collaborator: true, service: true },
+      relations: { collaborator: true, service: true, establishment: true },
       order: { appointment_date: "ASC", start_time: "ASC" },
     });
   }

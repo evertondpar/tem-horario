@@ -98,6 +98,17 @@ export class EstablishmentsController {
     return this.establishmentsService.updatePhoto(establishment.id, file);
   }
 
+  @Patch("cover-photo")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("establishment")
+  @UseInterceptors(FileInterceptor("file"))
+  updateCoverPhoto(
+    @CurrentUser() establishment: CurrentEstablishmentPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.establishmentsService.updateCoverPhoto(establishment.id, file);
+  }
+
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("establishment")

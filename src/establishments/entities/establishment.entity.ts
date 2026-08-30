@@ -24,8 +24,41 @@ export class Establishment {
   @Column({ default: "" })
   address: string;
 
+  @Column({ default: "" })
+  zip_code: string;
+
+  @Column({ default: "" })
+  street: string;
+
+  @Column({ default: "" })
+  address_number: string;
+
+  @Column({ default: "" })
+  address_complement: string;
+
+  @Column({ default: "" })
+  neighborhood: string;
+
+  @Column({ default: "" })
+  city: string;
+
+  @Column({ length: 2, default: "" })
+  state: string;
+
   @Column({ nullable: true })
   photo: string;
+
+  @Column({ nullable: true })
+  cover_photo: string;
+
+  @Column({ type: "tinyint", default: 50 })
+  cover_position: number;
+
+  @Column({ type: "text", nullable: true })
+  description: string | null;
+
+  @Column({ type: "text", nullable: true })
+  cancellation_policy: string | null;
 
   @Column()
   open_hour: string;
