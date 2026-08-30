@@ -12,7 +12,11 @@ async function bootstrap() {
 
   if (config.get("DEV")) {
     app.enableCors({
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+      origin: [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        config.get("FRONTEND_URL"),
+      ],
       credentials: true,
     });
     app.use((req, res, next) => {
